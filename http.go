@@ -13,6 +13,7 @@ import (
 
 type ipResponse struct {
 	DNS  string
+	EDNS string
 	HTTP string
 }
 
@@ -34,6 +35,12 @@ func jsonData(req *http.Request) (string, error) {
 	} else {
 		resp.DNS = get.Val()
 	}
+
+	get = Redis.Get("dnsedns-" + uuid)
+	if err := get.Err(); err == nil {
+		resp.EDNS = get.Val()
+	}
+
 	js, err := json.Marshal(resp)
 	if err != nil {
 		log.Print("JSON ERROR:", err)

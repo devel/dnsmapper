@@ -41,6 +41,27 @@ func setupNS() []dns.RR {
 	return nsList
 }
 
+func getEdnsSubNet(req *dns.Msg) string {
+	var ip string
+
+	for _, extra := range req.Extra {
+		// log.Println("Extra:", extra)
+		for _, o := range extra.(*dns.OPT).Option {
+			// opt_rr = extra.(*dns.OPT)
+			switch e := o.(type) {
+			case *dns.EDNS0_NSID:
+				// do stuff with e.Nsid
+			case *dns.EDNS0_SUBNET:
+				// log.Println("Got edns", e.Address, e.Family, e.SourceNetmask, e.SourceScope)
+				if e.Address != nil {
+					ip = e.Address.String()
+				}
+			}
+		}
+	}
+	return ip
+}
+
 func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 
 	soa := setupSOA()
@@ -78,6 +99,8 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 		log.Println("uuid", uuid)
 
 		if len(uuid) > 0 {
+
+			ednsIp := getEdnsSubNet(req)
 			ip, _, _ := net.SplitHostPort(w.RemoteAddr().String())
 
 			log.Println("Setting answer for ip:", ip)
@@ -85,6 +108,9 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 			m.Answer = []dns.RR{a}
 
 			Redis.SetEx("dns-"+uuid, 10, ip)
+			if len(ednsIp) > 0 {
+				Redis.SetEx("dnsedns-"+uuid, 10, ednsIp)
+			}
 		}
 
 		if len(m.Answer) == 0 {
