@@ -17,9 +17,13 @@ var (
 	flagdnsport  = flag.String("dnsport", "53", "Set the DNS port")
 	flaghttpport = flag.String("httpport", "80", "Set the HTTP port")
 	flaglog      = flag.Bool("log", false, "be more verbose")
+
+	flagPrimaryNs = flag.String("ns", "ns.example.com", "nameserver names (comma separated)")
 )
 
 var baseLength int
+
+var primaryNsList []string
 
 func getUuidFromDomain(name string) string {
 	lx := dns.SplitLabels(name)
@@ -32,6 +36,8 @@ func main() {
 	log.Printf("Starting dnsmapper %s\n", VERSION)
 
 	baseLength = dns.LenLabels(*flagdomain)
+
+	primaryNsList = strings.Split(*flagPrimaryNs, ",")
 
 	log.Println("Listening for requests to", *flagdomain)
 

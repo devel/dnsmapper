@@ -8,10 +8,8 @@ import (
 
 func setupSOA() *dns.SOA {
 
-	primaryNs := "ns"
-
 	s := *flagdomain + ". 3600 IN SOA " +
-		primaryNs + " hostmaster " +
+		primaryNsList[0] + " hostmaster " +
 		"1 5400 5400 2419200 300"
 
 	rr, err := dns.NewRR(s)
@@ -22,12 +20,31 @@ func setupSOA() *dns.SOA {
 	}
 
 	return rr.(*dns.SOA)
+}
 
+func setupNS() []dns.RR {
+
+	nsList := make([]dns.RR, 0)
+
+	for _, ns := range primaryNsList {
+		s := *flagdomain + ". 20800 IN NS " + ns + "."
+
+		rr, err := dns.NewRR(s)
+
+		if err != nil {
+			log.Println("NS Error", err)
+			panic("Could not setup NS")
+		}
+		nsList = append(nsList, rr)
+	}
+
+	return nsList
 }
 
 func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 
 	soa := setupSOA()
+	ns := setupNS()
 
 	h := &dns.RR_Header{Ttl: 10, Class: dns.ClassINET, Rrtype: dns.TypeA}
 	a := &dns.A{Hdr: *h, A: net.ParseIP(*flagip)}
@@ -42,6 +59,12 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 		m.Authoritative = true
 
 		qtype := req.Question[0].Qtype
+
+		if qtype == dns.TypeNS {
+			m.Ns = ns
+			w.WriteMsg(m)
+			return
+		}
 
 		// we only know how to do A records
 		if qtype != dns.TypeA {
