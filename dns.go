@@ -82,7 +82,7 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 		qtype := req.Question[0].Qtype
 
 		if qtype == dns.TypeNS {
-			m.Ns = ns
+			m.Answer = ns
 			w.WriteMsg(m)
 			return
 		}
