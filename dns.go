@@ -6,7 +6,7 @@ import (
 	"net"
 )
 
-func setupSOA() *dns.RR_SOA {
+func setupSOA() *dns.SOA {
 
 	primaryNs := "ns"
 
@@ -21,7 +21,7 @@ func setupSOA() *dns.RR_SOA {
 		panic("Could not setup SOA")
 	}
 
-	return rr.(*dns.RR_SOA)
+	return rr.(*dns.SOA)
 
 }
 
@@ -30,7 +30,7 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 	soa := setupSOA()
 
 	h := &dns.RR_Header{Ttl: 10, Class: dns.ClassINET, Rrtype: dns.TypeA}
-	a := &dns.RR_A{Hdr: *h, A: net.ParseIP(*flagip)}
+	a := &dns.A{Hdr: *h, A: net.ParseIP(*flagip)}
 
 	return func(w dns.ResponseWriter, req *dns.Msg) {
 
