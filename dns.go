@@ -41,8 +41,7 @@ func setupNS() []dns.RR {
 	return nsList
 }
 
-func getEdnsSubNet(req *dns.Msg) string {
-	var ip string
+func getEdnsSubNet(req *dns.Msg) (ip string, rr *dns.OPT, edns *dns.EDNS0_SUBNET) {
 
 	for _, extra := range req.Extra {
 		// log.Println("Extra:", extra)
@@ -54,12 +53,14 @@ func getEdnsSubNet(req *dns.Msg) string {
 			case *dns.EDNS0_SUBNET:
 				// log.Println("Got edns", e.Address, e.Family, e.SourceNetmask, e.SourceScope)
 				if e.Address != nil {
+					edns = e
+					rr = extra.(*dns.OPT)
 					ip = e.Address.String()
 				}
 			}
 		}
 	}
-	return ip
+	return
 }
 
 func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
@@ -100,7 +101,7 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 
 		if len(uuid) > 0 {
 
-			ednsIp := getEdnsSubNet(req)
+			ednsIp, extraRr, edns := getEdnsSubNet(req)
 			ip, _, _ := net.SplitHostPort(w.RemoteAddr().String())
 
 			log.Println("Setting answer for ip:", ip)
@@ -110,6 +111,15 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 			Redis.SetEx("dns-"+uuid, 10, ip)
 			if len(ednsIp) > 0 {
 				Redis.SetEx("dnsedns-"+uuid, 10, ednsIp)
+
+				if edns != nil {
+					// log.Println("family", edns.Family)
+					if edns.Family != 0 {
+						edns.SourceScope = 24
+						m.Extra = append(m.Extra, extraRr)
+					}
+				}
+
 			}
 		}
 
