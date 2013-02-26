@@ -80,9 +80,11 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 		}
 		m.Authoritative = true
 
+		uuid := getUuidFromDomain(req.Question[0].Name)
+
 		qtype := req.Question[0].Qtype
 
-		if qtype == dns.TypeNS {
+		if qtype == dns.TypeNS && len(uuid) == 0 {
 			m.Answer = ns
 			w.WriteMsg(m)
 			return
@@ -94,8 +96,6 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 			w.WriteMsg(m)
 			return
 		}
-
-		uuid := getUuidFromDomain(req.Question[0].Name)
 
 		log.Println("uuid", uuid)
 
@@ -121,6 +121,10 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 				}
 
 			}
+		} else {
+			// NOERROR
+			w.WriteMsg(m)
+			return
 		}
 
 		if len(m.Answer) == 0 {
