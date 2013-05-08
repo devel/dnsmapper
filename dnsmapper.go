@@ -2,14 +2,14 @@ package main
 
 import (
 	"flag"
-	"github.com/miekg/dns"
+	"github.com/abh/dns"
 	"log"
 	"os"
 	"os/signal"
 	"strings"
 )
 
-var VERSION string = "0.0.2"
+var VERSION string = "0.0.3"
 
 var (
 	flagdomain   = flag.String("domain", "example.com", "base domain for the dnsmapper")
