@@ -27,19 +27,26 @@ var primaryNsList []string
 
 func getUuidFromDomain(name string) string {
 	lx := dns.SplitLabels(name)
+	if len(lx) <= baseLength {
+		return ""
+	}
 	ql := lx[0 : len(lx)-baseLength]
 	return strings.ToLower(strings.Join(ql, "."))
+}
+
+func setup() {
+	baseLength = dns.LenLabels(*flagdomain)
+
+	primaryNsList = strings.Split(*flagPrimaryNs, ",")
+
+	log.Println("Listening for requests to", *flagdomain)
 }
 
 func main() {
 	flag.Parse()
 	log.Printf("Starting dnsmapper %s\n", VERSION)
 
-	baseLength = dns.LenLabels(*flagdomain)
-
-	primaryNsList = strings.Split(*flagPrimaryNs, ",")
-
-	log.Println("Listening for requests to", *flagdomain)
+	setup()
 
 	dns.HandleFunc(*flagdomain, setupServerFunc())
 
