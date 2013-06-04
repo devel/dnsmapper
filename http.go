@@ -32,9 +32,9 @@ func jsonData(req *http.Request) (string, error) {
 	get := Redis.Get("dns-" + uuid)
 	if err := get.Err(); err != nil {
 		return "", errors.New("UUID not found")
-	} else {
-		resp.DNS = get.Val()
 	}
+
+	resp.DNS = get.Val()
 
 	get = Redis.Get("dnsedns-" + uuid)
 	if err := get.Err(); err == nil {
@@ -56,7 +56,7 @@ func redirectUuid(w http.ResponseWriter, req *http.Request) {
 	return
 }
 
-func MainServer(w http.ResponseWriter, req *http.Request) {
+func mainServer(w http.ResponseWriter, req *http.Request) {
 
 	log.Println("HTTP request from", req.RemoteAddr, req.Host)
 
@@ -73,13 +73,16 @@ func MainServer(w http.ResponseWriter, req *http.Request) {
 			redirectUuid(w, req)
 			return
 		}
+
 		if jsonp := req.FormValue("jsonp"); len(jsonp) > 0 {
 			io.WriteString(w, jsonp+"("+js+");\n")
 			return
-		} else {
-			io.WriteString(w, js+"\n")
-			return
 		}
+
+		// not jsonp
+		io.WriteString(w, js+"\n")
+		return
+
 	}
 
 	if req.URL.Path == "/version" {
@@ -88,15 +91,14 @@ func MainServer(w http.ResponseWriter, req *http.Request) {
 			`Hello`+
 			`</body></html>`)
 		return
-	} else {
-		http.NotFound(w, req)
-		return
-
 	}
+
+	http.NotFound(w, req)
+	return
 }
 
 func httpHandler() {
-	http.HandleFunc("/", MainServer)
+	http.HandleFunc("/", mainServer)
 
 	log.Fatal(http.ListenAndServe(*flagip+":"+*flaghttpport, nil))
 }

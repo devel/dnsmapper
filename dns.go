@@ -101,7 +101,7 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 
 		if len(uuid) > 0 {
 
-			ednsIp, extraRr, edns := getEdnsSubNet(req)
+			ednsIP, extraRr, edns := getEdnsSubNet(req)
 			ip, _, _ := net.SplitHostPort(w.RemoteAddr().String())
 
 			log.Println("Setting answer for ip:", ip)
@@ -109,8 +109,8 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 			m.Answer = []dns.RR{a}
 
 			Redis.SetEx("dns-"+uuid, 10, ip)
-			if len(ednsIp) > 0 {
-				Redis.SetEx("dnsedns-"+uuid, 10, ednsIp)
+			if len(ednsIP) > 0 {
+				Redis.SetEx("dnsedns-"+uuid, 10, ednsIP)
 
 				if edns != nil {
 					// log.Println("family", edns.Family)

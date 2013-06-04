@@ -9,7 +9,8 @@ import (
 	"strings"
 )
 
-var VERSION string = "0.0.3"
+// Program version
+var VERSION = "0.0.3"
 
 var (
 	flagdomain   = flag.String("domain", "example.com", "base domain for the dnsmapper")

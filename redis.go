@@ -4,6 +4,7 @@ import (
 	"github.com/vmihailenco/redis"
 )
 
+// Global redis client
 var Redis *redis.Client
 
 func redisConnect() {
