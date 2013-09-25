@@ -9,8 +9,7 @@ import (
 	"strings"
 )
 
-// Program version
-var VERSION = "0.0.3"
+var VERSION = "0.0.4"
 
 var (
 	flagdomain   = flag.String("domain", "example.com", "base domain for the dnsmapper")
@@ -27,7 +26,7 @@ var baseLength int
 var primaryNsList []string
 
 func getUuidFromDomain(name string) string {
-	lx := dns.SplitLabels(name)
+	lx := dns.SplitDomainName(name)
 	if len(lx) <= baseLength {
 		return ""
 	}
@@ -36,7 +35,7 @@ func getUuidFromDomain(name string) string {
 }
 
 func setup() {
-	baseLength = dns.LenLabels(*flagdomain)
+	baseLength = dns.CountLabel(*flagdomain)
 
 	primaryNsList = strings.Split(*flagPrimaryNs, ",")
 
