@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/devel/dnsmapper/storeapi"
 	"io"
 	"log"
 	"net"
@@ -46,6 +47,19 @@ func jsonData(req *http.Request) (string, error) {
 		log.Print("JSON ERROR:", err)
 		return "", err
 	}
+
+	data := storeapi.RequestData{
+		TestIP:   *flagip,
+		ServerIP: resp.DNS,
+		ClientIP: resp.HTTP,
+		EnumNet:  resp.EDNS,
+	}
+	select {
+	case ch <- &data:
+	default:
+		log.Println("dropped log data, queue full")
+	}
+
 	return string(js), nil
 }
 

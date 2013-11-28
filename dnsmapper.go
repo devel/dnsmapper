@@ -3,27 +3,32 @@ package main
 import (
 	"flag"
 	"github.com/abh/dns"
+	"github.com/devel/dnsmapper/storeapi"
 	"log"
 	"os"
 	"os/signal"
 	"strings"
 )
 
-var VERSION = "0.0.4"
+var VERSION = "2.1.0"
 
 var (
-	flagdomain   = flag.String("domain", "example.com", "base domain for the dnsmapper")
-	flagip       = flag.String("ip", "127.0.0.1", "set the IP address")
-	flagdnsport  = flag.String("dnsport", "53", "Set the DNS port")
-	flaghttpport = flag.String("httpport", "80", "Set the HTTP port")
-	flaglog      = flag.Bool("log", false, "be more verbose")
+	flagdomain     = flag.String("domain", "example.com", "base domain for the dnsmapper")
+	flagip         = flag.String("ip", "127.0.0.1", "set the IP address")
+	flagdnsport    = flag.String("dnsport", "53", "Set the DNS port")
+	flaghttpport   = flag.String("httpport", "80", "Set the HTTP port")
+	flaglog        = flag.Bool("log", false, "be more verbose")
+	flagreporthost = flag.String("reporthost", "", "Hostname for results host")
 
 	flagPrimaryNs = flag.String("ns", "ns.example.com", "nameserver names (comma separated)")
 )
 
-var baseLength int
+type logChannel chan *storeapi.RequestData
 
+var baseLength int
 var primaryNsList []string
+
+var ch logChannel
 
 func getUuidFromDomain(name string) string {
 	lx := dns.SplitDomainName(name)
@@ -42,8 +47,12 @@ func setup() {
 	log.Println("Listening for requests to", *flagdomain)
 }
 
-func main() {
+func init() {
 	flag.Parse()
+	ch = make(logChannel, posterCount*20)
+}
+
+func main() {
 	log.Printf("Starting dnsmapper %s\n", VERSION)
 
 	setup()
@@ -51,6 +60,10 @@ func main() {
 	dns.HandleFunc(*flagdomain, setupServerFunc())
 
 	redisConnect()
+
+	for i := 0; i < posterCount; i++ {
+		go reportPoster(ch)
+	}
 
 	go httpHandler()
 	go listenAndServeDNS(*flagip + ":" + *flagdnsport)
