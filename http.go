@@ -94,11 +94,13 @@ func mainServer(w http.ResponseWriter, req *http.Request) {
 		}
 
 		if jsonp := req.FormValue("jsonp"); len(jsonp) > 0 {
+			w.Header().Set("Content-Type", "text/javascript")
 			io.WriteString(w, jsonp+"("+js+");\n")
 			return
 		}
 
 		// not jsonp
+		w.Header().Set("Content-Type", "application/json")
 		io.WriteString(w, js+"\n")
 		return
 
