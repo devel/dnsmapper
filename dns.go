@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/abh/dns"
 	"log"
 	"net"
@@ -41,7 +42,7 @@ func setupNS() []dns.RR {
 	return nsList
 }
 
-func getEdnsSubNet(req *dns.Msg) (ip string, rr *dns.OPT, edns *dns.EDNS0_SUBNET) {
+func getEdnsSubNet(req *dns.Msg) (enum string, rr *dns.OPT, edns *dns.EDNS0_SUBNET) {
 
 	for _, extra := range req.Extra {
 		// log.Println("Extra:", extra)
@@ -55,7 +56,7 @@ func getEdnsSubNet(req *dns.Msg) (ip string, rr *dns.OPT, edns *dns.EDNS0_SUBNET
 				if e.Address != nil {
 					edns = e
 					rr = extra.(*dns.OPT)
-					ip = e.Address.String()
+					enum = fmt.Sprintf("%s/%d", e.Address.String(), e.SourceNetmask)
 				}
 			}
 		}
