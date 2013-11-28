@@ -1,0 +1,22 @@
+
+create table ips (
+    client_ip inet not null,
+    server_ip inet not null,
+    enum_net  cidr null,
+    client_cc char(2) null,
+    client_rc char(2) null,
+    server_cc char(2) null,
+    server_rc char(2) null,
+    enum_cc char(2) null,
+    enum_rc char(2) null,
+    client_asn int null,
+    server_asn int null,
+    enum_asn int null,
+    has_enum boolean,
+    test_ip  inet,
+    first_seen timestamp with time zone,
+    last_seen timestamp with time zone
+);
+
+CREATE UNIQUE INDEX ips_ip_uidx ON ips (server_ip, client_ip);
+create index ips_client_idx on ips (client_ip, server_ip);
