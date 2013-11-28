@@ -80,11 +80,16 @@ func mainServer(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if req.URL.Path == "/jsonp" || req.URL.Path == "/json" {
+	if req.URL.Path == "/jsonp" || req.URL.Path == "/json" || req.URL.Path == "/none" {
 
 		js, err := jsonData(req)
 		if err != nil {
 			redirectUuid(w, req)
+			return
+		}
+
+		if req.URL.Path == "/none" {
+			w.WriteHeader(204)
 			return
 		}
 
