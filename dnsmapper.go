@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-var VERSION = "2.1.0"
+var VERSION = "2.1.2"
 
 var (
 	flagdomain     = flag.String("domain", "example.com", "base domain for the dnsmapper")

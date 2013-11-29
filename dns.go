@@ -69,7 +69,7 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 	soa := setupSOA()
 	ns := setupNS()
 
-	h := &dns.RR_Header{Ttl: 10, Class: dns.ClassINET, Rrtype: dns.TypeA}
+	h := &dns.RR_Header{Ttl: 5, Class: dns.ClassINET, Rrtype: dns.TypeA}
 	a := &dns.A{Hdr: *h, A: net.ParseIP(*flagip)}
 
 	return func(w dns.ResponseWriter, req *dns.Msg) {
@@ -109,19 +109,28 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 			a.Header().Name = req.Question[0].Name
 			m.Answer = []dns.RR{a}
 
-			Redis.SetEx("dns-"+uuid, 10, ip)
+			if uuid == "www" {
+				a.Header().Ttl = 120
+			} else {
+				a.Header().Ttl = 5
+			}
+
+			session := ip
+
 			if len(ednsIP) > 0 {
-				Redis.SetEx("dnsedns-"+uuid, 10, ednsIP)
+				session = session + " " + ednsIP
 
 				if edns != nil {
 					// log.Println("family", edns.Family)
 					if edns.Family != 0 {
-						edns.SourceScope = 24
+						edns.SourceScope = edns.SourceNetmask
 						m.Extra = append(m.Extra, extraRr)
 					}
 				}
-
 			}
+
+			Redis.SetEx("dns-"+uuid, 8, session)
+
 		} else {
 			// NOERROR
 			w.WriteMsg(m)

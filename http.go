@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strings"
 )
 
 type ipResponse struct {
@@ -35,11 +36,11 @@ func jsonData(req *http.Request) (string, error) {
 		return "", errors.New("UUID not found")
 	}
 
-	resp.DNS = get.Val()
+	v := strings.Split(get.Val(), " ")
 
-	get = Redis.Get("dnsedns-" + uuid)
-	if err := get.Err(); err == nil {
-		resp.EDNS = get.Val()
+	resp.DNS = v[0]
+	if len(v) > 1 {
+		resp.EDNS = v[1]
 	}
 
 	js, err := json.Marshal(resp)
