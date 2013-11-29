@@ -138,8 +138,10 @@ func ccLookup(ip string) (string, string, int) {
 	asnStr, _ := geoasn.GetName(ip)
 	if len(asnStr) > 0 {
 		spaceIdx := strings.Index(asnStr, " ")
-		asnStr = asnStr[2:spaceIdx]
-		asn, _ = strconv.Atoi(asnStr)
+		if spaceIdx > 0 {
+			asnStr = asnStr[2:spaceIdx]
+			asn, _ = strconv.Atoi(asnStr)
+		}
 	}
 
 	return r.CountryCode, r.Region, asn
