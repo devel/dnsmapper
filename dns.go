@@ -98,7 +98,7 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 			return
 		}
 
-		log.Println("uuid", uuid)
+		log.Println("dns uuid", uuid)
 
 		if len(uuid) > 0 {
 
@@ -144,7 +144,7 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 			m.Ns = []dns.RR{soa}
 		}
 
-		log.Println("Returning", m)
+		// log.Println("Returning", m)
 
 		w.WriteMsg(m)
 		return

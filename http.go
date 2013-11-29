@@ -2,9 +2,9 @@ package main
 
 import (
 	"crypto/rand"
+	"encoding/base32"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/devel/dnsmapper/storeapi"
 	"io"
 	"log"
@@ -19,10 +19,27 @@ type ipResponse struct {
 	HTTP string
 }
 
+var uuidCh chan string
+
+func uuidFactory() {
+	uuidCh = make(chan string, 100)
+
+	enc := base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
+
+	length := 20
+
+	buf := make([]byte, length)
+	uuid := make([]byte, enc.EncodedLen(length))
+
+	for {
+		rand.Read(buf)
+		enc.Encode(uuid, buf)
+		uuidCh <- string(uuid)
+	}
+}
+
 func uuid() string {
-	buf := make([]byte, 16)
-	io.ReadFull(rand.Reader, buf)
-	return fmt.Sprintf("%x", buf)
+	return <-uuidCh
 }
 
 func jsonData(req *http.Request) (string, error) {
@@ -120,6 +137,9 @@ func mainServer(w http.ResponseWriter, req *http.Request) {
 }
 
 func httpHandler() {
+
+	go uuidFactory()
+
 	http.HandleFunc("/", mainServer)
 
 	log.Fatal(http.ListenAndServe(*flagip+":"+*flaghttpport, nil))
