@@ -92,6 +92,8 @@ func mainServer(w http.ResponseWriter, req *http.Request) {
 
 	log.Println("HTTP request from", req.RemoteAddr, req.Host)
 
+	w.Header().Set("Cache-Control", "private, no-cache, no-store, must-revalidate")
+
 	uuid := getUuidFromDomain(req.Host)
 	if uuid == "www" {
 		redirectUuid(w, req)
