@@ -84,7 +84,14 @@ func jsonData(req *http.Request) (string, error) {
 func redirectUuid(w http.ResponseWriter, req *http.Request) {
 	uuid := uuid()
 	host := uuid + "." + *flagdomain
-	http.Redirect(w, req, "http://"+host+req.RequestURI, 302)
+
+	proto := "http"
+
+	if req.TLS != nil {
+		proto = "https"
+	}
+
+	http.Redirect(w, req, proto+"://"+host+req.RequestURI, 302)
 	return
 }
 
@@ -144,5 +151,27 @@ func httpHandler() {
 
 	http.HandleFunc("/", mainServer)
 
-	log.Fatal(http.ListenAndServe(*flagip+":"+*flaghttpport, nil))
+	if len(*flagtlskeyfile) > 0 {
+
+		log.Printf("Starting TLS with key='%s' and cert='%s'",
+			*flagtlskeyfile,
+			*flagtlscrtfile,
+		)
+
+		go func() {
+			tlslisten := *flagip + ":" + *flaghttpsport
+			log.Println("Going to listen for TLS requests on port", tlslisten)
+			log.Fatal(http.ListenAndServeTLS(
+				tlslisten,
+				*flagtlscrtfile,
+				*flagtlskeyfile,
+				nil,
+			))
+		}()
+	}
+
+	listen := *flagip + ":" + *flaghttpport
+	log.Println("HTTP listen on", listen)
+	log.Fatal(http.ListenAndServe(listen, nil))
+
 }

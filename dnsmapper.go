@@ -17,6 +17,10 @@ var (
 	flagip         = flag.String("ip", "127.0.0.1", "set the IP address")
 	flagdnsport    = flag.String("dnsport", "53", "Set the DNS port")
 	flaghttpport   = flag.String("httpport", "80", "Set the HTTP port")
+	flaghttpsport  = flag.String("httpsport", "443", "Set the HTTP/TLS port")
+	flagtlskeyfile = flag.String("tlskeyfile", "", "Specify path to TLS key (optional)")
+	flagtlscrtfile = flag.String("tlscertfile", "", "Specify path to TLS certificate (optional)")
+
 	flaglog        = flag.Bool("log", false, "be more verbose")
 	flagreporthost = flag.String("reporthost", "", "Hostname for results host")
 
