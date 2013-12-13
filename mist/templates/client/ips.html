@@ -1,0 +1,27 @@
+<table class="table table-striped">
+<tr>
+	<th>DNS Server</th>
+	<th>Country</th>
+	<th>Region
+	<th>ASN</th>
+	<th>EDNS</th>
+	<th>Country</th>
+	<th>Region</th>
+</tr>
+{{#ips}}
+<tr>
+<td>{{ServerIP}}</td>
+<td>{{ServerCC}}</td>
+<td>{{ServerRC}}</td>
+<td>{{ServerASN}}</td>
+{{#HasEdns}}
+<td>{{EdnsNet}}</td>
+<td>{{EdnsCC}}</td>
+<td>{{EdnsRC}}</td>
+{{/HasEdns}}
+{{^HasEdns}}
+<td colspan="3"></td>
+{{/HasEdns}}
+</tr>
+{{/ips}}
+</table>
