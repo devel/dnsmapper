@@ -20,6 +20,7 @@ var (
 	listen    = flag.String("listen", "", "Listen on this ip:port for the HTTP API")
 	geoipPath = flag.String("geoip", "", "Optional directory for geoip database files")
 	dbuser    = flag.String("dbuser", "ask", "Postgres user name")
+	dbpass    = flag.String("dbpass", "", "Postgres password")
 	dbhost    = flag.String("dbhost", "localhost", "Postgres host name")
 )
 
@@ -149,7 +150,7 @@ func ccLookup(ip string) (string, string, int) {
 
 func dbConnect() {
 	var err error
-	db, err = sql.Open("postgres", fmt.Sprintf("user=%s host=%s sslmode=disable", *dbuser, *dbhost))
+	db, err = sql.Open("postgres", fmt.Sprintf("user=%s host=%s password=%s sslmode=disable", *dbuser, *dbhost, *dbpass))
 	if err != nil {
 		log.Fatalf("create db error: %s", err)
 	}
