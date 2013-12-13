@@ -98,21 +98,21 @@ func storeHandler(w *rest.ResponseWriter, r *rest.Request) {
 		TestIP:   reqData.TestIP,
 		ClientIP: reqData.ClientIP,
 		ServerIP: reqData.ServerIP,
-		EnumNet:  reqData.EnumNet,
+		EdnsNet:  reqData.EdnsNet,
 		LastSeen: &now,
 	}
 
 	data.ClientCC, data.ClientRC, data.ClientASN = ccLookup(data.ClientIP)
 	data.ServerCC, data.ServerRC, data.ServerASN = ccLookup(data.ServerIP)
 
-	if len(data.EnumNet) > 0 {
-		enumIP, _, _ := net.ParseCIDR(data.EnumNet)
-		data.EnumCC, data.EnumRC, data.EnumASN = ccLookup(enumIP.String())
-		data.HasEnum = true
+	if len(data.EdnsNet) > 0 {
+		ednsIP, _, _ := net.ParseCIDR(data.EdnsNet)
+		data.EdnsCC, data.EdnsRC, data.EdnsASN = ccLookup(ednsIP.String())
+		data.HasEdns = true
 	} else {
-		data.EnumNet = data.ServerIP
-		data.EnumCC, data.EnumRC, data.EnumASN = data.ServerCC, data.ServerRC, data.ServerASN
-		data.HasEnum = false
+		data.EdnsNet = data.ServerIP
+		data.EdnsCC, data.EdnsRC, data.EdnsASN = data.ServerCC, data.ServerRC, data.ServerASN
+		data.HasEdns = false
 	}
 
 	w.WriteHeader(204)
@@ -168,7 +168,7 @@ func dbStore(data *storeapi.LogData) error {
 	    SELECT
     	$1::inet AS client_ip,
     	$2::inet AS server_ip,
-    	$3::cidr AS enum_net,
+    	$3::cidr AS edns_net,
 
     	$4::char(2) AS client_cc,
     	$5::char(2) AS client_rc,
@@ -178,13 +178,13 @@ func dbStore(data *storeapi.LogData) error {
     	$8::char(2) AS server_rc,
     	$9::int AS     server_asn,
 
-    	$10::char(2) AS enum_cc,
-    	$11::char(2) AS enum_rc,
-    	$12::int AS     enum_asn,
+    	$10::char(2) AS edns_cc,
+    	$11::char(2) AS edns_rc,
+    	$12::int AS     edns_asn,
 
     	$13::inet AS test_ip,
 
-    	$14::boolean AS has_enum,
+    	$14::boolean AS has_edns,
     	$15::timestamp AS last_seen
 	),
 	update_ips AS (
@@ -198,13 +198,13 @@ func dbStore(data *storeapi.LogData) error {
     		server_rc = ud.server_rc,
     		server_asn = ud.server_asn,
 
-    		enum_cc = ud.enum_cc,
-    		enum_rc = ud.enum_rc,
-    		enum_asn = ud.enum_asn,
+    		edns_cc = ud.edns_cc,
+    		edns_rc = ud.edns_rc,
+    		edns_asn = ud.edns_asn,
 
     		test_ip = ud.test_ip,
 
-    		has_enum = ud.has_enum,
+    		has_edns = ud.has_edns,
     		last_seen = ud.last_seen
 
     	FROM upsert_data ud
@@ -215,19 +215,19 @@ func dbStore(data *storeapi.LogData) error {
 	)
     INSERT INTO
         ips
-		(client_ip, server_ip, enum_net,
+		(client_ip, server_ip, edns_net,
 		 client_cc, client_rc, client_asn,
 		 server_cc, server_rc, server_asn,
-		 enum_cc, enum_rc, enum_asn,
-		 test_ip, has_enum,
+		 edns_cc, edns_rc, edns_asn,
+		 test_ip, has_edns,
 		 first_seen, last_seen
 		)
 		SELECT
-			client_ip, server_ip, enum_net,
+			client_ip, server_ip, edns_net,
 			client_cc, client_rc, client_asn,
 			server_cc, server_rc, server_asn,
-			enum_cc, enum_rc, enum_asn,
-			test_ip, has_enum,
+			edns_cc, edns_rc, edns_asn,
+			test_ip, has_edns,
 			last_seen, last_seen
 			FROM upsert_data
 			WHERE NOT EXISTS (
@@ -235,11 +235,11 @@ func dbStore(data *storeapi.LogData) error {
 				WHERE (up.client_ip = upsert_data.client_ip)
 			)
 	`,
-		data.ClientIP, data.ServerIP, data.EnumNet,
+		data.ClientIP, data.ServerIP, data.EdnsNet,
 		data.ClientCC, data.ClientRC, data.ClientASN,
 		data.ServerCC, data.ServerRC, data.ServerASN,
-		data.EnumCC, data.EnumRC, data.EnumASN,
-		data.TestIP, data.HasEnum, data.LastSeen,
+		data.EdnsCC, data.EdnsRC, data.EdnsASN,
+		data.TestIP, data.HasEdns, data.LastSeen,
 	)
 
 	fmt.Printf("DB RESULT: %#v: %s\n", rv, err)

@@ -8,27 +8,27 @@ import (
 type RequestData struct {
 	ClientIP string
 	ServerIP string
-	EnumNet  string
+	EdnsNet  string
 	TestIP   string
 }
 
 type LogData struct {
-	ClientIP  string
-	ServerIP  string
-	EnumNet   string
-	ClientCC  string
-	ClientRC  string
-	ServerCC  string
-	ServerRC  string
-	EnumCC    string
-	EnumRC    string
-	ClientASN int
-	ServerASN int
-	EnumASN   int
-	HasEnum   bool
-	TestIP    string
-	FirstSeen *time.Time
-	LastSeen  *time.Time
+	ClientIP  string     `db:"client_ip"`
+	ServerIP  string     `db:"server_ip"`
+	EdnsNet   string     `db:"edns_net"`
+	ClientCC  string     `db:"client_cc"`
+	ClientRC  string     `db:"client_rc"`
+	ServerCC  string     `db:"server_cc"`
+	ServerRC  string     `db:"server_rc"`
+	EdnsCC    string     `db:"edns_cc"`
+	EdnsRC    string     `db:"edns_rc""`
+	ClientASN int        `db:"client_asn"`
+	ServerASN int        `db:"server_asn"`
+	EdnsASN   int        `db:"edns_asn"`
+	HasEdns   bool       `db:"has_edns"`
+	TestIP    string     `db:"test_ip" json:"-"`
+	FirstSeen *time.Time `db:"first_seen" json:"-"`
+	LastSeen  *time.Time `db:"last_seen" json:"-"`
 }
 
 func (data *RequestData) JSON() ([]byte, error) {
