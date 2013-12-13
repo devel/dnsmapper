@@ -99,15 +99,15 @@ func mainServer(w http.ResponseWriter, req *http.Request) {
 
 	log.Println("HTTP request from", req.RemoteAddr, req.Host)
 
-	w.Header().Set("Cache-Control", "private, no-cache, no-store, must-revalidate")
-
-	uuid := getUuidFromDomain(req.Host)
-	if uuid == "www" {
-		redirectUuid(w, req)
-		return
-	}
-
 	if req.URL.Path == "/jsonp" || req.URL.Path == "/json" || req.URL.Path == "/none" {
+
+		w.Header().Set("Cache-Control", "private, no-cache, no-store, must-revalidate")
+
+		uuid := getUuidFromDomain(req.Host)
+		if uuid == "www" {
+			redirectUuid(w, req)
+			return
+		}
 
 		js, err := jsonData(req)
 		if err != nil {
