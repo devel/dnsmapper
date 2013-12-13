@@ -244,7 +244,13 @@ func dbStore(data *storeapi.LogData) error {
 		data.TestIP, data.HasEdns, data.LastSeen,
 	)
 
-	fmt.Printf("DB RESULT: %#v: %s\n", rv, err)
+	if err != nil {
+		fmt.Printf("DB Error: %s\n", err)
+		return err
+	}
+
+	updated, _ := rv.RowsAffected()
+	fmt.Printf("Updated %d rows\n", updated)
 
 	return err
 }
