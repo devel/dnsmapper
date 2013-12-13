@@ -154,6 +154,7 @@ func dbConnect() {
 	if err != nil {
 		log.Fatalf("create db error: %s", err)
 	}
+	db.SetMaxOpenConns(50)
 }
 
 func dbStore(data *storeapi.LogData) error {
