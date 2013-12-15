@@ -70,7 +70,7 @@ func jsonData(req *http.Request) (string, error) {
 		TestIP:   *flagip,
 		ServerIP: resp.DNS,
 		ClientIP: resp.HTTP,
-		EnumNet:  resp.EDNS,
+		EdnsNet:  resp.EDNS,
 	}
 	select {
 	case ch <- &data:
