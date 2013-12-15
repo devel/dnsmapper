@@ -82,6 +82,8 @@ func myIpHandler(res http.ResponseWriter, r *http.Request, rndr render.Render) s
 		log.Fatalf("query err: %s", err)
 	}
 
+	res.Header().Set("Cache-Control", "private, must-revalidate, max-age=0")
+
 	rndr.JSON(200, ips)
 	return ""
 
