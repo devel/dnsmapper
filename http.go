@@ -24,7 +24,7 @@ type ipResponse struct {
 var uuidCh chan string
 
 func uuidFactory() {
-	uuidCh = make(chan string, 100)
+	uuidCh = make(chan string, 10)
 
 	enc := base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
 

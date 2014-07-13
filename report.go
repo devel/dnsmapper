@@ -28,6 +28,9 @@ func reportPoster(ch logChannel) {
 		active = true
 	}
 
+	var js []byte
+	var err error
+
 	for {
 		select {
 		case data := <-ch:
@@ -38,12 +41,13 @@ func reportPoster(ch logChannel) {
 				continue
 			}
 
-			js, err := data.JSON()
+			js, err = data.JSON()
 			if err != nil {
 				log.Println("Could not encode JSON: ", err)
 				continue
 			}
-			req, err := http.NewRequest("POST", url, bytes.NewReader(js))
+			reader := bytes.NewReader(js)
+			req, err := http.NewRequest("POST", url, reader)
 			req.Header.Set("Content-Type", "application/json")
 
 			resp, err := client.Do(req)
@@ -51,7 +55,7 @@ func reportPoster(ch logChannel) {
 				log.Printf("Error posting data: %s", err)
 				continue
 			}
-			defer resp.Body.Close()
+			resp.Body.Close()
 
 			if resp.StatusCode < 200 || resp.StatusCode > 299 {
 				log.Printf("Unhappy response: %d\n", resp.StatusCode)

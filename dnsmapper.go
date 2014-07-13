@@ -2,18 +2,19 @@ package main
 
 import (
 	"flag"
-	"github.com/abh/dns"
-	"github.com/devel/dnsmapper/storeapi"
 	"log"
 	"os"
 	"os/signal"
 	"runtime"
 	"runtime/pprof"
 	"strings"
+
+	"github.com/abh/dns"
+	"github.com/devel/dnsmapper/storeapi"
 )
 
 // Current version
-var VERSION = "2.2.2"
+var VERSION = "2.2.3"
 
 var (
 	flagdomain     = flag.String("domain", "example.com", "base domain for the dnsmapper")
