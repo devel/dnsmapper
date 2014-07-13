@@ -5,12 +5,14 @@ import (
 	"encoding/base32"
 	"encoding/json"
 	"errors"
-	"github.com/devel/dnsmapper/storeapi"
 	"io"
 	"log"
 	"net"
 	"net/http"
 	"strings"
+	"time"
+
+	"github.com/devel/dnsmapper/storeapi"
 )
 
 type ipResponse struct {
@@ -160,18 +162,27 @@ func httpHandler() {
 
 		go func() {
 			tlslisten := *flagip + ":" + *flaghttpsport
+			srv := &http.Server{
+				Addr:         tlslisten,
+				WriteTimeout: 5 * time.Second,
+				ReadTimeout:  10 * time.Second,
+			}
 			log.Println("Going to listen for TLS requests on port", tlslisten)
-			log.Fatal(http.ListenAndServeTLS(
-				tlslisten,
+			log.Fatal(srv.ListenAndServeTLS(
 				*flagtlscrtfile,
 				*flagtlskeyfile,
-				nil,
 			))
+
 		}()
 	}
 
 	listen := *flagip + ":" + *flaghttpport
+	srv := &http.Server{
+		Addr:         listen,
+		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  5 * time.Second,
+	}
 	log.Println("HTTP listen on", listen)
-	log.Fatal(http.ListenAndServe(listen, nil))
+	log.Fatal(srv.ListenAndServe())
 
 }
