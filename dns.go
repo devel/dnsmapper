@@ -115,10 +115,12 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 				a.Header().Ttl = 5
 			}
 
-			session := ip
+			var session string
 
-			if len(ednsIP) > 0 {
-				session = session + " " + ednsIP
+			if len(ednsIP) == 0 {
+				session = ip
+			} else {
+				session = ip + " " + ednsIP
 
 				if edns != nil {
 					// log.Println("family", edns.Family)
