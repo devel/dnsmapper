@@ -7,10 +7,13 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
+	"runtime/pprof"
 	"strings"
 )
 
-var VERSION = "2.2.1"
+// Current version
+var VERSION = "2.2.2"
 
 var (
 	flagdomain     = flag.String("domain", "example.com", "base domain for the dnsmapper")
@@ -59,6 +62,8 @@ func init() {
 func main() {
 	log.Printf("Starting dnsmapper %s\n", VERSION)
 
+	runtime.MemProfileRate = 1
+
 	setup()
 
 	dns.HandleFunc(*flagdomain, setupServerFunc())
@@ -77,5 +82,16 @@ func main() {
 
 	<-terminate
 	log.Printf("dnsmapper: signal received, stopping")
+
+	f, err := os.Create("dnsmapper.pprof")
+	if err != nil {
+		log.Fatal(err)
+	}
+	pprof.WriteHeapProfile(f)
+	err = f.Close()
+	if err != nil {
+		log.Println("Error closing profile:", err)
+	}
+	log.Println("... exiting.")
 
 }
