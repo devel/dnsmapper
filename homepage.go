@@ -1,0 +1,160 @@
+package main
+
+const HOMEPAGE = `
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>NTP Pool DNS Mapper</title>
+  <link rel="stylesheet" href="//st.pimg.net/cdn/libs/pure/0.5.0/pure-min.css">
+
+<style>
+.content {
+    margin: 0 auto;
+    padding: 0 2em;
+    max-width: 800px;
+    margin-bottom: 50px;
+    line-height: 1.6em;
+}
+
+code.example {
+	display: block;
+    background-color: #F9F9F9;
+    border: 1px dashed #2F6FAB;
+    color: black;
+    line-height: 1.1em;
+    padding: 1em;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="content">
+
+    <h2>NTP Pool DNS Mapper</h2>
+
+    <h3>What is this?</h3>
+    <p>The NTP Pool DNS Mapper tries mapping user IP addresses to their DNS
+    	servers (and vice-versa). It also tracks which servers support EDNS-SUBNET
+    	and how well that actually matches the client IP (as seen by the HTTP server).
+    	You can see a demo at <a href="http://mist.ntppool.org">mist.ntppool.org</a>.
+    </p>
+    <p>
+    	It's done to research how to improve the DNS system used by the
+        <a href="http://www.ntppool.org/">NTP Pool</a> and potentially other
+        similar applications.
+    </p>
+
+    <h3>How can I help?</h3>
+    <p>
+    	Thank you for asking! The easiest way to help is to help get more data.
+    </p>
+    <p>
+    	If you have a website you can have your users help by adding one of
+    	the following two code snippets to your site.
+    </p>
+    <p>
+    	1) Insert a simple image tag just before the &lt;/body&gt; tag.
+		This will "run" on every page load and make two http requests.
+    	<code class="example">
+    	 &lt;img src="//www.mapper.ntppool.org/none"&gt;
+    	</code>
+    </p>
+	<p>
+    	2) Insert a small javascript just before the &lt;/body&gt; tag and
+		after any other scripts on your page. This requires javascript on the
+		end-user, but has the advantage of being cached and then only do a
+		single HTTP request for the "probe". The probe runs 3 seconds after
+		the page has loaded.
+		This is the better implementation if your users typically stay on
+    	your site for more than a single pageview or two.
+    	<code class="example">
+    	&lt;script src="//www.mapper.ntppool.org/mapper.js"&gt;&lt;/script&gt;
+    	</code>
+    </p>
+    <p>
+    	As an alternative you can copy the javascript from mapper.js into
+    	another script running on your site.
+    </p>
+    <p>
+    	If your site gets more than 15 million requests a month, please <a
+    	href="#contact">send a note</a> before adding the integration. The
+    	service is running both on HTTP and HTTPS.
+    </p>
+
+    <h3>API</h3>
+    <p>
+    Because it works with a simple HTTP request (sometimes plus a redirect)
+    you can use it to query your public IP address and the public IP of the
+    DNS server you used.
+
+    <code class="example">
+       $ curl -fsL www.mapper.ntppool.org/json
+       {"DNS":"192.0.2.1","EDNS":"","HTTP":"198.51.100.2"}
+    </code>
+
+    </p>
+	<p>
+		If called from a webpage you can use <a href="http://en.wikipedia.org/wiki/JSONP">
+		jsonp</a> via the url
+
+    	<code class="example">
+    	   www.mapper.ntppool.org/jsonp?jsonp=functionName
+    	</code>
+
+    	You can see an example of this on the <a href="http://mist.ntppool.org/">demo site</a>.
+  	</p>
+  	<p>
+  		When called on the hostname "www" the first response will be a redirect. You
+  		can see <a href="/mapper.js">mapper.js</a> for an example of how to avoid this.
+  		It is important that each request URL is unique.
+  	</p>
+  	<p>
+  		If you use the API, please <a href="#contact">send me a note</a>.
+  	</p>
+
+
+  <h3>Privacy Policy</h3>
+  <p>
+    The system logs the client IP address, the DNS server IP and information
+    about the servers support for the EDNS-SUBNET extension. The country, region
+    and AS number for the IP addresses is also logged.
+    For each set of client and server IP address it also logs a time stamp
+    for the first and most recent time the combination has been seen.
+    Other (meta) data may be added in the future, but the goal of the project
+    will remain to explore the relationship between DNS and client IPs; not
+    in to track users or site behavior.
+  </p>
+  <p>
+  	The user-agent, http referrer or other headers are not logged persistently.
+    They may be logged temporarily for debugging purposes.
+  </p>
+  <p>
+  	The system does not read or set any cookies. See above how the system uses
+  	a temporary unique identifier to track requests.
+  </p>
+  <p>
+    The data-set is not currently publically available and changing that will be
+    carefully considered, but it's a possibility for the future. If you have
+    a use case for the data that can help make the internet work better, get in
+    touch.
+  </p>
+
+  <h3>Terms of service</h3>
+  <p>
+    The service is provided with absolutely no warranty or claims of suitability
+    for anything. It is run on a best efforts basis.
+  </p>
+
+  <h3 id="contact">Contact</h3>
+  Email <a href="http://www.askask.com/contact/">Ask Bjørn Hansen</a>.
+
+</div>
+
+  <script src="/mapper.js"></script>
+</body>
+</html>
+`

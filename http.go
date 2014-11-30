@@ -9,9 +9,11 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/devel/dnsmapper/storeapi"
+	"github.com/gorilla/handlers"
 )
 
 type ipResponse struct {
@@ -146,6 +148,20 @@ setTimeout(function(){(new Image).src="http://"+id()+".`+
 		return
 	}
 
+	if req.URL.Path == "/" {
+		w.Header().Set("Cache-Control", "public, max-age=900")
+		w.WriteHeader(200)
+		io.WriteString(w, HOMEPAGE)
+		return
+	}
+
+	if req.URL.Path == "/robots.txt" {
+		w.Header().Set("Cache-Control", "public, max-age=604800")
+		w.WriteHeader(200)
+		io.WriteString(w, "# Hi Robot!\n")
+		return
+	}
+
 	if req.URL.Path == "/version" {
 		io.WriteString(w, `<html><head><title>DNS Mapper `+
 			VERSION+`</title><body>`+
@@ -189,6 +205,7 @@ func httpHandler() {
 
 	listen := *flagip + ":" + *flaghttpport
 	srv := &http.Server{
+		Handler:      handlers.CombinedLoggingHandler(os.Stdout, http.DefaultServeMux),
 		Addr:         listen,
 		WriteTimeout: 5 * time.Second,
 		ReadTimeout:  5 * time.Second,
