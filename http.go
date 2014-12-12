@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/rand"
+	"crypto/tls"
 	"encoding/base32"
 	"encoding/json"
 	"errors"
@@ -188,11 +189,15 @@ func httpHandler() {
 		)
 
 		go func() {
+
+			tlsconfig := &tls.Config{MinVersion: tls.VersionTLS10}
+
 			tlslisten := *flagip + ":" + *flaghttpsport
 			srv := &http.Server{
 				Addr:         tlslisten,
 				WriteTimeout: 5 * time.Second,
 				ReadTimeout:  10 * time.Second,
+				TLSConfig:    tlsconfig,
 			}
 			log.Println("Going to listen for TLS requests on port", tlslisten)
 			log.Fatal(srv.ListenAndServeTLS(
