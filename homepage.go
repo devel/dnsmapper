@@ -117,7 +117,7 @@ code.example {
   	</p>
 
 
-  <h3>Privacy Policy</h3>
+  <h3>Privacy</h3>
   <p>
     The system logs the client IP address, the DNS server IP and information
     about the servers support for the EDNS-SUBNET extension. The country, region
@@ -129,12 +129,12 @@ code.example {
     in to track users or site behavior.
   </p>
   <p>
-  	The user-agent, http referrer or other headers are not logged persistently.
+    The user-agent, http referrer or other headers are not logged persistently.
     They may be logged temporarily for debugging purposes.
   </p>
   <p>
-  	The system does not read or set any cookies. See above how the system uses
-  	a temporary unique identifier to track requests.
+    The system does not read or set any cookies. See above how the system uses
+    an ephemeral unique identifier to track requests.
   </p>
   <p>
     The data-set is not currently publically available and changing that will be
