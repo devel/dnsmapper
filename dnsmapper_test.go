@@ -1,23 +1,16 @@
 package main
 
 import (
-	. "launchpad.net/gocheck"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func Test(t *testing.T) { TestingT(t) }
-
-type MainSuite struct {
-}
-
-var _ = Suite(&MainSuite{})
-
-func (s *MainSuite) TestRedis(c *C) {
+func TestDomainParse(t *testing.T) {
 	*flagdomain = "mapper.example.com"
 	setup()
 
-	c.Check(getUuidFromDomain("abc"), Equals, "")
-	c.Check(getUuidFromDomain("mapper.example.com"), Equals, "")
-	c.Check(getUuidFromDomain("foobar.mapper.example.com"), Equals, "foobar")
-
+	assert.Equal(t, "", getUuidFromDomain("abc"), "invalid domain")
+	assert.Equal(t, "", getUuidFromDomain("mapper.example.com"), "base domain")
+	assert.Equal(t, "foobar", getUuidFromDomain("foobar.mapper.example.com"), "base domain with host")
 }
