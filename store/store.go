@@ -4,16 +4,17 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"github.com/abh/geoip"
-	"github.com/ant0ine/go-json-rest"
-	"github.com/devel/dnsmapper/storeapi"
-	_ "github.com/lib/pq"
 	"log"
 	"net"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/abh/geoip"
+	"github.com/ant0ine/go-json-rest/rest"
+	"github.com/devel/dnsmapper/storeapi"
+	_ "github.com/lib/pq"
 )
 
 var (
@@ -253,29 +254,4 @@ func dbStore(data *storeapi.LogData) error {
 	fmt.Printf("Updated %d rows\n", updated)
 
 	return err
-}
-
-func queryExp() {
-
-	serverIp := "8.8.8.8"
-	rows, err := db.Query("SELECT client_ip from ips where server_ip = $1", serverIp)
-
-	if err != nil {
-		log.Fatalf("query err: %s", err)
-	}
-
-	for rows.Next() {
-		var ip string
-		err = rows.Scan(&ip)
-		if err != nil {
-			log.Fatalf("Scan error: %s", err)
-		}
-
-		log.Println("got ip", ip)
-
-	}
-	err = rows.Err() // get any error encountered during iteration
-	if err != nil {
-		log.Fatalf("Scan error: %s", err)
-	}
 }
