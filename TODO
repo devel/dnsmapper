@@ -1,0 +1,8 @@
+- remove martini from mist
+- remove gocheck from store, storeapi and mist
+
+--
+
+- JS widget
+- support a static CNAME to elsewhere to host the JS widget?
+- setup on anycast?
