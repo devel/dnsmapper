@@ -132,6 +132,20 @@ func mainServer(w http.ResponseWriter, req *http.Request) {
 
 	}
 
+	if req.URL.Path == "/mapper.js" {
+		w.Header().Set("Cache-Control", "public, max-age=86400")
+		w.WriteHeader(200)
+		io.WriteString(w, `
+(function(global){"use strict";var id=function(){var chars="0123456789abcdefghijklmnopqrstuvxyz".split("");
+var uuid=[],rnd=Math.random,r;for(var i=0;i<17;i++){if(!uuid[i]){r=0|rnd()*16;uuid[i]=chars[i==19?r&3|8:r&15]}}
+return uuid.join("")};
+setTimeout(function(){(new Image).src="http://"+id()+".`+
+			*flagdomain+
+			`/none"},3200)})(this);
+`)
+		return
+	}
+
 	if req.URL.Path == "/version" {
 		io.WriteString(w, `<html><head><title>DNS Mapper `+
 			VERSION+`</title><body>`+
