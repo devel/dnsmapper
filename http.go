@@ -48,7 +48,7 @@ func jsonData(req *http.Request) (string, error) {
 
 	resp := &ipResponse{HTTP: ip, DNS: ""}
 
-	uuid := getUuidFromDomain(req.Host)
+	uuid := getUUIDFromDomain(req.Host)
 
 	dns, edns, ok := getCache(uuid)
 
@@ -80,7 +80,7 @@ func jsonData(req *http.Request) (string, error) {
 	return string(js), nil
 }
 
-func redirectUuid(w http.ResponseWriter, req *http.Request) {
+func redirectUUID(w http.ResponseWriter, req *http.Request) {
 	uuid := uuid()
 	host := uuid + "." + *flagdomain
 
@@ -102,15 +102,15 @@ func mainServer(w http.ResponseWriter, req *http.Request) {
 
 		w.Header().Set("Cache-Control", "private, no-cache, no-store, must-revalidate")
 
-		uuid := getUuidFromDomain(req.Host)
+		uuid := getUUIDFromDomain(req.Host)
 		if uuid == "www" {
-			redirectUuid(w, req)
+			redirectUUID(w, req)
 			return
 		}
 
 		js, err := jsonData(req)
 		if err != nil {
-			redirectUuid(w, req)
+			redirectUUID(w, req)
 			return
 		}
 

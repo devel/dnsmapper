@@ -10,7 +10,7 @@ func TestDomainParse(t *testing.T) {
 	*flagdomain = "mapper.example.com"
 	setup()
 
-	assert.Equal(t, "", getUuidFromDomain("abc"), "invalid domain")
-	assert.Equal(t, "", getUuidFromDomain("mapper.example.com"), "base domain")
-	assert.Equal(t, "foobar", getUuidFromDomain("foobar.mapper.example.com"), "base domain with host")
+	assert.Equal(t, "", getUUIDFromDomain("abc"), "invalid domain")
+	assert.Equal(t, "", getUUIDFromDomain("mapper.example.com"), "base domain")
+	assert.Equal(t, "foobar", getUUIDFromDomain("foobar.mapper.example.com"), "base domain with host")
 }

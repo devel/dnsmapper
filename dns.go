@@ -82,7 +82,7 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 		}
 		m.Authoritative = true
 
-		uuid := getUuidFromDomain(req.Question[0].Name)
+		uuid := getUUIDFromDomain(req.Question[0].Name)
 
 		qtype := req.Question[0].Qtype
 
@@ -101,7 +101,7 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 
 		if len(uuid) > 0 {
 
-			ednsIP, extraRr, edns := getEdnsSubNet(req)
+			ednsIP, extraRR, edns := getEdnsSubNet(req)
 			ip, _, _ := net.SplitHostPort(w.RemoteAddr().String())
 
 			log.Println("Setting answer for ip:", ip)
@@ -109,14 +109,19 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 			m.Answer = []dns.RR{a}
 
 			if uuid == "www" {
+				// we always redirect on 'www' so tell DNS caches
+				// it is good for a little longer and don't store
+				// the session
 				a.Header().Ttl = 120
 			} else {
+				// We expire the session data after 10 seconds, so
+				// encourage DNS caches to come back after 5.
 				a.Header().Ttl = 5
 				if edns != nil {
 					// log.Println("family", edns.Family)
 					if edns.Family != 0 {
 						edns.SourceScope = edns.SourceNetmask
-						m.Extra = append(m.Extra, extraRr)
+						m.Extra = append(m.Extra, extraRR)
 					}
 				}
 				setCache(uuid, ip, ednsIP)

@@ -41,7 +41,7 @@ var cache *lru.Cache
 
 var ch logChannel
 
-func getUuidFromDomain(name string) string {
+func getUUIDFromDomain(name string) string {
 	lx := dns.SplitDomainName(name)
 	if len(lx) <= baseLength {
 		return ""

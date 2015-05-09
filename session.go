@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// Session is what we store temporarily from each DNS requestxxrf
 type Session struct {
 	IP     string
 	EDNS   string
