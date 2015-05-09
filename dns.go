@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/abh/dns"
 	"log"
 	"net"
+
+	"github.com/abh/dns"
 )
 
 func setupSOA() *dns.SOA {
@@ -25,7 +26,7 @@ func setupSOA() *dns.SOA {
 
 func setupNS() []dns.RR {
 
-	nsList := make([]dns.RR, 0)
+	var nsList []dns.RR
 
 	for _, ns := range primaryNsList {
 		s := *flagdomain + ". 20800 IN NS " + ns + "."
@@ -98,8 +99,6 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 			return
 		}
 
-		log.Println("dns uuid", uuid)
-
 		if len(uuid) > 0 {
 
 			ednsIP, extraRr, edns := getEdnsSubNet(req)
@@ -113,15 +112,6 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 				a.Header().Ttl = 120
 			} else {
 				a.Header().Ttl = 5
-			}
-
-			var session string
-
-			if len(ednsIP) == 0 {
-				session = ip
-			} else {
-				session = ip + " " + ednsIP
-
 				if edns != nil {
 					// log.Println("family", edns.Family)
 					if edns.Family != 0 {
@@ -129,9 +119,8 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 						m.Extra = append(m.Extra, extraRr)
 					}
 				}
+				setCache(uuid, ip, ednsIP)
 			}
-
-			Redis.SetEx("dns-"+uuid, 8, session)
 
 		} else {
 			// NOERROR

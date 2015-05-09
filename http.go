@@ -9,7 +9,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/devel/dnsmapper/storeapi"
@@ -50,17 +49,15 @@ func jsonData(req *http.Request) (string, error) {
 	resp := &ipResponse{HTTP: ip, DNS: ""}
 
 	uuid := getUuidFromDomain(req.Host)
-	get := Redis.Get("dns-" + uuid)
-	if err := get.Err(); err != nil {
+
+	dns, edns, ok := getCache(uuid)
+
+	if !ok {
 		return "", errors.New("UUID not found")
 	}
 
-	v := strings.Split(get.Val(), " ")
-
-	resp.DNS = v[0]
-	if len(v) > 1 {
-		resp.EDNS = v[1]
-	}
+	resp.DNS = dns
+	resp.EDNS = edns
 
 	js, err := json.Marshal(resp)
 	if err != nil {

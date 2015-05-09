@@ -11,10 +11,11 @@ import (
 
 	"github.com/abh/dns"
 	"github.com/devel/dnsmapper/storeapi"
+	"github.com/hashicorp/golang-lru"
 )
 
 // Current version
-var VERSION = "2.2.3"
+var VERSION = "2.3.0"
 
 var (
 	flagdomain     = flag.String("domain", "example.com", "base domain for the dnsmapper")
@@ -35,6 +36,8 @@ type logChannel chan *storeapi.RequestData
 
 var baseLength int
 var primaryNsList []string
+
+var cache *lru.Cache
 
 var ch logChannel
 
@@ -58,6 +61,16 @@ func setup() {
 func init() {
 	flag.Parse()
 	ch = make(logChannel, posterCount*20)
+
+	// Setup a cache to support X DNS requests per time-period
+	// per server where time-period is how long the client
+	// gets to come back with http after doing the DNS request.
+	var err error
+	cache, err = lru.New(20000)
+	if err != nil {
+		log.Fatalf("Could not setup lru cache: %s", err)
+	}
+
 }
 
 func main() {
@@ -68,8 +81,6 @@ func main() {
 	setup()
 
 	dns.HandleFunc(*flagdomain, setupServerFunc())
-
-	redisConnect()
 
 	for i := 0; i < posterCount; i++ {
 		go reportPoster(ch)
