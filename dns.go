@@ -104,7 +104,7 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 			ednsIP, extraRR, edns := getEdnsSubNet(req)
 			ip, _, _ := net.SplitHostPort(w.RemoteAddr().String())
 
-			log.Println("Setting answer for ip:", ip)
+			log.Printf("DNS request from %s for %s", ip, uuid)
 			a.Header().Name = req.Question[0].Name
 			m.Answer = []dns.RR{a}
 

@@ -99,8 +99,6 @@ func redirectUUID(w http.ResponseWriter, req *http.Request) {
 
 func mainServer(w http.ResponseWriter, req *http.Request) {
 
-	log.Println("HTTP request from", req.RemoteAddr, req.Host)
-
 	if req.URL.Path == "/jsonp" || req.URL.Path == "/json" || req.URL.Path == "/none" {
 
 		w.Header().Set("Cache-Control", "private, no-cache, no-store, must-revalidate")

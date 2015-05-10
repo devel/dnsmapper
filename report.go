@@ -34,7 +34,7 @@ func reportPoster(ch logChannel) {
 	for {
 		select {
 		case data := <-ch:
-			log.Printf("got log data: '%#v'", data)
+			// log.Printf("got log data: '%#v'", data)
 
 			if !active {
 				log.Println("report poster not active")
