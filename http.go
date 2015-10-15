@@ -135,6 +135,7 @@ func mainServer(w http.ResponseWriter, req *http.Request) {
 
 	if req.URL.Path == "/mapper.js" {
 		w.Header().Set("Cache-Control", "public, max-age=86400")
+		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
 		w.WriteHeader(200)
 		io.WriteString(w, `
 (function(global){"use strict";var id=function(){var chars="0123456789abcdefghijklmnopqrstuvxyz".split("");
@@ -156,6 +157,7 @@ setTimeout(function(){(new Image).src="http://"+id()+".`+
 
 	if req.URL.Path == "/robots.txt" {
 		w.Header().Set("Cache-Control", "public, max-age=604800")
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.WriteHeader(200)
 		io.WriteString(w, "# Hi Robot!\n")
 		return
