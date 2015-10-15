@@ -3,15 +3,17 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"net"
+	"net/http"
+	"strings"
+
 	"github.com/codegangsta/martini"
 	"github.com/codegangsta/martini-contrib/gzip"
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/devel/dnsmapper/storeapi"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"log"
-	"net"
-	"net/http"
 )
 
 var (
@@ -22,11 +24,21 @@ var (
 )
 
 var (
-	db *sqlx.DB
+	db        *sqlx.DB
+	localNets []*net.IPNet
 )
 
 func init() {
 	flag.Parse()
+
+	pn := []string{"10.0.0.0/8", "192.168.0.0/16"}
+	for _, p := range pn {
+		_, ipnet, err := net.ParseCIDR(p)
+		if err != nil {
+			panic(err)
+		}
+		localNets = append(localNets, ipnet)
+	}
 }
 
 func main() {
@@ -62,22 +74,18 @@ func myIpHandler(res http.ResponseWriter, r *http.Request, rndr render.Render) s
 
 	// now := time.Now().UTC()
 
-	ipStr := r.Header.Get("X-Forwarded-For")
-	if len(ipStr) == 0 {
-		log.Println("Didn't get X-Forwarded-for!")
-		ipStr = r.RemoteAddr
-	}
-
+	ipStr := remoteIP(r)
 	log.Println("getting where IP is", ipStr)
 
 	ip := net.ParseIP(ipStr)
 	if ip == nil {
+		log.Printf("Not a valid IP address (X-Forwarded-For) '%s'", ipStr)
 		res.WriteHeader(400)
 		return ""
 	}
 
 	ips := []storeapi.LogData{}
-	err := db.Selectv(&ips, "SELECT * FROM ips where client_ip = $1 order by last_seen desc", ip.String())
+	err := db.Select(&ips, "SELECT * FROM ips where client_ip = $1 order by last_seen desc", ip.String())
 	if err != nil {
 		log.Fatalf("query err: %s", err)
 	}
@@ -96,5 +104,33 @@ func dbConnect() {
 		log.Fatalf("create db error: %s", err)
 	}
 	db.SetMaxOpenConns(50)
+}
 
+func localNet(ip net.IP) bool {
+	for _, n := range localNets {
+		if n.Contains(ip) {
+			return true
+		}
+	}
+	return false
+}
+
+func remoteIP(r *http.Request) string {
+	xff := r.Header.Get("X-Forwarded-For")
+	if len(xff) > 0 {
+		ips := strings.Split(xff, ",")
+		for i := len(ips) - 1; i >= 0; i-- {
+			ip := strings.TrimSpace(ips[i])
+			nip := net.ParseIP(ip)
+			if nip != nil {
+				if localNet(nip) {
+					continue
+				}
+				return nip.String()
+			}
+		}
+	}
+
+	ip, _, _ := net.SplitHostPort(r.RemoteAddr)
+	return ip
 }

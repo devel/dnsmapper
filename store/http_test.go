@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	. "launchpad.net/gocheck"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	. "gopkg.in/check.v1"
 )
 
 type HttpSuite struct {

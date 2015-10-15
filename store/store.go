@@ -58,17 +58,19 @@ func buildMux() *http.ServeMux {
 
 	mux := http.NewServeMux()
 
-	restHandler := rest.ResourceHandler{}
-	restHandler.EnableGzip = true
-	restHandler.EnableLogAsJson = true
-	restHandler.EnableResponseStackTrace = true
-	//restHandler.EnableStatusService = true
+	api := rest.NewApi()
+	api.Use(rest.DefaultDevStack...)
 
-	restHandler.SetRoutes(
-		rest.Route{"POST", "/api/v1/store-result", storeHandler},
+	router, err := rest.MakeRouter(
+		rest.Post("/api/v1/store-result", storeHandler),
 	)
+	if err != nil {
+		log.Fatalf("Could not configure router: %s", err)
+	}
 
-	mux.Handle("/api/v1/", &restHandler)
+	api.SetApp(router)
+
+	mux.Handle("/api/v1/", api.MakeHandler())
 
 	return mux
 
@@ -80,7 +82,7 @@ func startHttp(listen string) {
 	fmt.Printf("Could not listen to %s: %s", listen, err)
 }
 
-func storeHandler(w *rest.ResponseWriter, r *rest.Request) {
+func storeHandler(w rest.ResponseWriter, r *rest.Request) {
 
 	// err := r.ParseForm()
 	// if err != nil {
