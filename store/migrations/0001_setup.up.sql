@@ -17,4 +17,4 @@ create table IF NOT EXISTS ips (
     last_seen timestamp with time zone
 );
 
-create index ips_client_idx if not exists on ips (client_ip, server_ip);
+create index if not exists ips_client_idx on ips (client_ip, server_ip);
