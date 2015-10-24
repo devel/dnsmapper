@@ -6,3 +6,10 @@
 - JS widget
 - support a static CNAME to elsewhere to host the JS widget?
 - setup on anycast?
+
+- statsd/influxdb data on:
+  - count of dns and http requests
+  - latency between dns and http request
+  - failures (no data, bad requests, ...?)
+- JS widget to show result
+- setup on anycast (dns)
