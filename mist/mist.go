@@ -1,5 +1,7 @@
 package main
 
+//go:generate esc -o static.go -ignore .DS_Store public
+
 import (
 	"flag"
 	"fmt"
@@ -21,6 +23,8 @@ var (
 	dbuser = flag.String("dbuser", "ask", "Postgres user name")
 	dbpass = flag.String("dbpass", "", "Postgres password")
 	dbhost = flag.String("dbhost", "localhost", "Postgres host name")
+	devel  = flag.Bool("devel", false, "development mode")
+	// todo: make schema configurable
 )
 
 var (
@@ -55,7 +59,7 @@ func buildMux() *http.ServeMux {
 	api.Use(rest.DefaultDevStack...)
 
 	router, err := rest.MakeRouter(
-		rest.Get("/api/v1/myip", myIpHandler),
+		rest.Get("/myip", myIpHandler),
 	)
 	if err != nil {
 		log.Fatalf("Could not configure router: %s", err)
@@ -63,7 +67,9 @@ func buildMux() *http.ServeMux {
 
 	api.SetApp(router)
 
-	mux.Handle("/api/v1/", api.MakeHandler())
+	mux.Handle("/", http.FileServer(Dir(*devel, "/public")))
+
+	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", api.MakeHandler()))
 
 	return mux
 }
