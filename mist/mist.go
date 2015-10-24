@@ -6,11 +6,11 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 
-	"github.com/codegangsta/martini"
-	"github.com/codegangsta/martini-contrib/gzip"
-	"github.com/codegangsta/martini-contrib/render"
+	"github.com/ant0ine/go-json-rest/rest"
+
 	"github.com/devel/dnsmapper/storeapi"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -31,6 +31,8 @@ var (
 func init() {
 	flag.Parse()
 
+	os.Setenv("PGSSLMODE", "disable")
+
 	pn := []string{"10.0.0.0/8", "192.168.0.0/16"}
 	for _, p := range pn {
 		_, ipnet, err := net.ParseCIDR(p)
@@ -49,15 +51,21 @@ func buildMux() *http.ServeMux {
 
 	mux := http.NewServeMux()
 
-	m := martini.Classic()
-	m.Use(gzip.All())
-	m.Use(render.Renderer())
-	m.Get("/api/v1/myip", myIpHandler)
+	api := rest.NewApi()
+	api.Use(rest.DefaultDevStack...)
 
-	mux.Handle("/", m)
+	router, err := rest.MakeRouter(
+		rest.Get("/api/v1/myip", myIpHandler),
+	)
+	if err != nil {
+		log.Fatalf("Could not configure router: %s", err)
+	}
+
+	api.SetApp(router)
+
+	mux.Handle("/api/v1/", api.MakeHandler())
 
 	return mux
-
 }
 
 func startHttp(listen string) {
@@ -66,7 +74,7 @@ func startHttp(listen string) {
 	fmt.Printf("Could not listen to %s: %s", listen, err)
 }
 
-func myIpHandler(res http.ResponseWriter, r *http.Request, rndr render.Render) string {
+func myIpHandler(w rest.ResponseWriter, r *rest.Request) {
 
 	if db == nil {
 		dbConnect()
@@ -74,27 +82,31 @@ func myIpHandler(res http.ResponseWriter, r *http.Request, rndr render.Render) s
 
 	// now := time.Now().UTC()
 
-	ipStr := remoteIP(r)
+	ipStr := remoteIP(r.Header)
+	if len(ipStr) == 0 {
+		ipStr, _, _ = net.SplitHostPort(r.RemoteAddr)
+	}
 	log.Println("getting where IP is", ipStr)
 
 	ip := net.ParseIP(ipStr)
 	if ip == nil {
 		log.Printf("Not a valid IP address (X-Forwarded-For) '%s'", ipStr)
-		res.WriteHeader(400)
-		return ""
+		http.Error(w.(http.ResponseWriter), "Invalid IP", 400)
+		return
 	}
 
 	ips := []storeapi.LogData{}
 	err := db.Select(&ips, "SELECT * FROM ips where client_ip = $1 order by last_seen desc", ip.String())
 	if err != nil {
-		log.Fatalf("query err: %s", err)
+		log.Printf("query err: %s", err)
+		http.Error(w.(http.ResponseWriter), "db error", 500)
 	}
 
-	res.Header().Set("Cache-Control", "private, must-revalidate, max-age=0")
+	w.Header().Set("Cache-Control", "private, must-revalidate, max-age=0")
 
-	rndr.JSON(200, ips)
-	return ""
+	w.WriteJson(ips)
 
+	return
 }
 
 func dbConnect() {
@@ -103,6 +115,7 @@ func dbConnect() {
 	if err != nil {
 		log.Fatalf("create db error: %s", err)
 	}
+	db.Exec("SET search_path TO dnsmapper")
 	db.SetMaxOpenConns(50)
 }
 
@@ -115,8 +128,8 @@ func localNet(ip net.IP) bool {
 	return false
 }
 
-func remoteIP(r *http.Request) string {
-	xff := r.Header.Get("X-Forwarded-For")
+func remoteIP(h http.Header) string {
+	xff := h.Get("X-Forwarded-For")
 	if len(xff) > 0 {
 		ips := strings.Split(xff, ",")
 		for i := len(ips) - 1; i >= 0; i-- {
@@ -131,6 +144,5 @@ func remoteIP(r *http.Request) string {
 		}
 	}
 
-	ip, _, _ := net.SplitHostPort(r.RemoteAddr)
-	return ip
+	return ""
 }

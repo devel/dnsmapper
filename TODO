@@ -1,5 +1,4 @@
-- remove martini from mist
-- remove gocheck from store, storeapi and mist
+- remove gocheck from store and storeapi
 
 --
 
