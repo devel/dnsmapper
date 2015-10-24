@@ -21,7 +21,7 @@ type LogData struct {
 	ServerCC  string     `db:"server_cc"`
 	ServerRC  string     `db:"server_rc"`
 	EdnsCC    string     `db:"edns_cc"`
-	EdnsRC    string     `db:"edns_rc""`
+	EdnsRC    string     `db:"edns_rc"`
 	ClientASN int        `db:"client_asn"`
 	ServerASN int        `db:"server_asn"`
 	EdnsASN   int        `db:"edns_asn"`
