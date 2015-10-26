@@ -9,13 +9,13 @@ import (
 	"runtime/pprof"
 	"strings"
 
-	"github.com/abh/dns"
 	"github.com/devel/dnsmapper/storeapi"
 	"github.com/hashicorp/golang-lru"
+	"github.com/miekg/dns"
 )
 
 // Current version
-var VERSION = "2.3.0"
+var VERSION = "2.4.0"
 
 var (
 	flagdomain     = flag.String("domain", "example.com", "base domain for the dnsmapper")
@@ -61,6 +61,8 @@ func setup() {
 func init() {
 	flag.Parse()
 	ch = make(logChannel, posterCount*20)
+
+	os.Setenv("PGSSLMODE", "disable")
 
 	// Setup a cache to support X DNS requests per time-period
 	// per server where time-period is how long the client

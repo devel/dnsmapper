@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/devel/dnsmapper/storeapi"
@@ -23,7 +24,23 @@ type ipResponse struct {
 	HTTP string
 }
 
-var uuidCh chan string
+var (
+	uuidCh    chan string
+	localNets []*net.IPNet
+)
+
+func init() {
+	go uuidFactory()
+
+	pn := []string{"10.0.0.0/8", "192.168.0.0/16"}
+	for _, p := range pn {
+		_, ipnet, err := net.ParseCIDR(p)
+		if err != nil {
+			panic(err)
+		}
+		localNets = append(localNets, ipnet)
+	}
+}
 
 func uuidFactory() {
 	uuidCh = make(chan string, 10)
@@ -47,7 +64,11 @@ func uuid() string {
 }
 
 func jsonData(req *http.Request) (string, error) {
-	ip, _, _ := net.SplitHostPort(req.RemoteAddr)
+
+	ip := remoteIP(req.Header)
+	if len(ip) == 0 {
+		ip, _, _ = net.SplitHostPort(req.RemoteAddr)
+	}
 
 	resp := &ipResponse{HTTP: ip, DNS: ""}
 
@@ -176,9 +197,6 @@ setTimeout(function(){(new Image).src="http://"+id()+".`+
 }
 
 func httpHandler() {
-
-	go uuidFactory()
-
 	http.HandleFunc("/", mainServer)
 
 	if len(*flagtlskeyfile) > 0 {
@@ -232,4 +250,32 @@ func httpHandler() {
 	log.Println("HTTP listen on", listen)
 	log.Fatal(srv.ListenAndServe())
 
+}
+
+func localNet(ip net.IP) bool {
+	for _, n := range localNets {
+		if n.Contains(ip) {
+			return true
+		}
+	}
+	return false
+}
+
+func remoteIP(h http.Header) string {
+	xff := h.Get("X-Forwarded-For")
+	if len(xff) > 0 {
+		ips := strings.Split(xff, ",")
+		for i := len(ips) - 1; i >= 0; i-- {
+			ip := strings.TrimSpace(ips[i])
+			nip := net.ParseIP(ip)
+			if nip != nil {
+				if localNet(nip) {
+					continue
+				}
+				return nip.String()
+			}
+		}
+	}
+
+	return ""
 }

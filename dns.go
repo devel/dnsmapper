@@ -5,7 +5,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/abh/dns"
+	"github.com/miekg/dns"
 )
 
 func setupSOA() *dns.SOA {
