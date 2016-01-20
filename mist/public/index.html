@@ -94,7 +94,7 @@
 
     <script>
         $("#result").html("Testing...");
-        var rand = Math.random() * 1000;
+        var rand = parseInt((Math.random()*2000000000),10).toString(36);
         $.getJSON("//" + rand + ".mapper.ntppool.org/jsonp?jsonp=?", {},
             function(data) {
                 var result = "Hello " + data.HTTP +
