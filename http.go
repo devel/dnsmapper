@@ -123,6 +123,8 @@ func mainServer(w http.ResponseWriter, req *http.Request) {
 	if req.URL.Path == "/jsonp" || req.URL.Path == "/json" || req.URL.Path == "/none" {
 
 		w.Header().Set("Cache-Control", "private, no-cache, no-store, must-revalidate")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET")
 
 		uuid := getUUIDFromDomain(req.Host)
 		if uuid == "www" {
