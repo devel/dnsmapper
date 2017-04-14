@@ -13,4 +13,4 @@ https://support.maxmind.com/geoip-data-correction-request/
 License
 -------
 
-Copyright 2013 Ask Bjørn Hansen. Licensed under the MIT license.
+Copyright 2013-2017 Ask Bjørn Hansen. Licensed under the MIT license.
