@@ -48,7 +48,7 @@ func init() {
 }
 
 func main() {
-	startHttp(*listen)
+	startHTTP(*listen)
 }
 
 func buildMux() *http.ServeMux {
@@ -59,7 +59,7 @@ func buildMux() *http.ServeMux {
 	api.Use(rest.DefaultDevStack...)
 
 	router, err := rest.MakeRouter(
-		rest.Get("/myip", myIpHandler),
+		rest.Get("/myip", myIPHandler),
 	)
 	if err != nil {
 		log.Fatalf("Could not configure router: %s", err)
@@ -74,16 +74,19 @@ func buildMux() *http.ServeMux {
 	return mux
 }
 
-func startHttp(listen string) {
+func startHTTP(listen string) {
 	fmt.Printf("Listening on http://%s\n", listen)
 	err := http.ListenAndServe(listen, buildMux())
 	fmt.Printf("Could not listen to %s: %s", listen, err)
 }
 
-func myIpHandler(w rest.ResponseWriter, r *rest.Request) {
+func myIPHandler(w rest.ResponseWriter, r *rest.Request) {
 
 	if db == nil {
-		dbConnect()
+		err := dbConnect()
+		if err != nil {
+			http.Error(w.(http.ResponseWriter), "db connect error", 500)
+		}
 	}
 
 	// now := time.Now().UTC()
@@ -115,14 +118,15 @@ func myIpHandler(w rest.ResponseWriter, r *rest.Request) {
 	return
 }
 
-func dbConnect() {
+func dbConnect() error {
 	var err error
 	db, err = sqlx.Connect("postgres", fmt.Sprintf("user=%s host=%s password=%s sslmode=disable", *dbuser, *dbhost, *dbpass))
 	if err != nil {
-		log.Fatalf("create db error: %s", err)
+		return err
 	}
-	db.Exec("SET search_path TO dnsmapper")
+	db.Exec("SET search_path TO dnsmapper,public")
 	db.SetMaxOpenConns(50)
+	return db.Ping()
 }
 
 func localNet(ip net.IP) bool {

@@ -30,18 +30,19 @@ func TestAPI(t *testing.T) {
 
 	assert.Equal(t, 200, resp.StatusCode)
 
-	if p, err := ioutil.ReadAll(resp.Body); err != nil {
+	var p []byte
+	if p, err = ioutil.ReadAll(resp.Body); err != nil {
 		t.Errorf("Error reading response: %s", err)
 		return
-	} else {
-		t.Logf("response data: '%s'", p)
+	}
 
-		ips := []storeapi.LogData{}
+	t.Logf("response data: '%s'", p)
 
-		err = json.Unmarshal(p, &ips)
-		if err != nil {
-			t.Errorf("Error parsing response: %s", err)
-		}
+	ips := []storeapi.LogData{}
+
+	err = json.Unmarshal(p, &ips)
+	if err != nil {
+		t.Errorf("Error parsing response: %s", err)
 	}
 
 }
