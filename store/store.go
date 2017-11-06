@@ -210,58 +210,58 @@ func dbStore(data *storeapi.LogData) error {
 
 	rv, err := db.Exec(`
 	WITH upsert_data AS (
-	    SELECT
-    	$1::inet AS client_ip,
-    	$2::inet AS server_ip,
-    	$3::cidr AS edns_net,
+		SELECT
+		$1::inet AS client_ip,
+		$2::inet AS server_ip,
+		$3::cidr AS edns_net,
 
-    	$4::char(2) AS client_cc,
-    	$5::char(2) AS client_rc,
-    	$6::int AS client_asn,
+		$4::char(2) AS client_cc,
+		$5::char(2) AS client_rc,
+		$6::int AS client_asn,
 
-    	$7::char(2) AS server_cc,
-    	$8::char(2) AS server_rc,
-    	$9::int AS     server_asn,
+		$7::char(2) AS server_cc,
+		$8::char(2) AS server_rc,
+		$9::int AS     server_asn,
 
-    	$10::char(2) AS edns_cc,
-    	$11::char(2) AS edns_rc,
-    	$12::int AS     edns_asn,
+		$10::char(2) AS edns_cc,
+		$11::char(2) AS edns_rc,
+		$12::int AS     edns_asn,
 
-    	$13::inet AS test_ip,
+		$13::inet AS test_ip,
 
-    	$14::boolean AS has_edns,
-    	$15::timestamp AS last_seen
+		$14::boolean AS has_edns,
+		$15::timestamp AS last_seen
 	),
 	update_ips AS (
-    	UPDATE ips
-    	SET
-		edns_net = ud.edns_net,
+		UPDATE ips
+		SET
+			edns_net = ud.edns_net,
 
-    		client_cc = ud.client_cc,
-    		client_rc = ud.client_rc,
-    		client_asn = ud.client_asn,
+			client_cc = ud.client_cc,
+			client_rc = ud.client_rc,
+			client_asn = ud.client_asn,
 
-    		server_cc = ud.server_cc,
-    		server_rc = ud.server_rc,
-    		server_asn = ud.server_asn,
+			server_cc = ud.server_cc,
+			server_rc = ud.server_rc,
+			server_asn = ud.server_asn,
 
-    		edns_cc = ud.edns_cc,
-    		edns_rc = ud.edns_rc,
-    		edns_asn = ud.edns_asn,
+			edns_cc = ud.edns_cc,
+			edns_rc = ud.edns_rc,
+			edns_asn = ud.edns_asn,
 
-    		test_ip = ud.test_ip,
+			test_ip = ud.test_ip,
 
-    		has_edns = ud.has_edns,
-    		last_seen = ud.last_seen
+			has_edns = ud.has_edns,
+			last_seen = ud.last_seen
 
-    	FROM upsert_data ud
-    	WHERE
-    		ips.client_ip = ud.client_ip AND
-    		ips.server_ip = ud.server_ip
-	    RETURNING ips.*
+		FROM upsert_data ud
+		WHERE
+			ips.client_ip = ud.client_ip AND
+			ips.server_ip = ud.server_ip
+		RETURNING ips.*
 	)
-    INSERT INTO
-        ips
+	INSERT INTO
+		ips
 		(client_ip, server_ip, edns_net,
 		 client_cc, client_rc, client_asn,
 		 server_cc, server_rc, server_asn,
