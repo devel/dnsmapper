@@ -71,6 +71,12 @@ func buildMux() *http.ServeMux {
 
 	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", api.MakeHandler()))
 
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, req *http.Request) {
+		w.WriteHeader(200)
+		w.Write([]byte("ok\n"))
+		return
+	})
+
 	return mux
 }
 
