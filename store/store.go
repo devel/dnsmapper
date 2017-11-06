@@ -14,7 +14,6 @@ import (
 
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/devel/dnsmapper/storeapi"
-	"github.com/kr/pretty"
 	_ "github.com/lib/pq"
 	"github.com/oschwald/geoip2-golang"
 )
@@ -45,22 +44,27 @@ func init() {
 	var err error
 
 	dbName := "GeoIP2-City.mmdb"
+	asnDbName := "GeoIP2-ASN.mmdb"
 
 	if len(path) > 0 {
 		dbName = filepath.Join(path, dbName)
+		asnDbName = filepath.Join(path, asnDbName)
 	}
 
 	geodb, err = geoip2.Open(dbName)
 	if err != nil {
-		log.Printf("Could not open GeoIP database '%s': %s", dbName, err)
+		log.Printf("Could not open City GeoIP database '%s': %s", dbName, err)
 		log.Fatal(err)
 	}
 	log.Printf("Opened '%s' (%s)", dbName, geodb.Metadata().DatabaseType)
 
-	// geoasn, err = geoip.OpenType(geoip.GEOIP_ASNUM_EDITION)
-	// if err != nil {
-	// 	log.Fatalf("Could not open asn geoip database: %s", err)
-	// }
+	geoasn, err = geoip2.Open(asnDbName)
+	if err != nil {
+		log.Printf("Could not open ASN GeoIP database '%s': %s", asnDbName, err)
+		log.Fatal(err)
+	}
+	log.Printf("Opened '%s' (%s)", asnDbName, geoasn.Metadata().DatabaseType)
+
 }
 
 func main() {
@@ -146,9 +150,10 @@ func storeHandler(w rest.ResponseWriter, r *rest.Request) {
 
 }
 
-func ccLookup(ip net.IP) (string, string, int) {
+func ccLookup(ip net.IP) (rcc string, rrc string, rasn uint) {
+	// rcc: return country code, rrc: return region code, rasn: return asn
 	if ip == nil {
-		return "", "", 0
+		return
 	}
 
 	// If you are using strings that may be invalid, check that ip is not nil
@@ -159,36 +164,31 @@ func ccLookup(ip net.IP) (string, string, int) {
 			err = errors.New("not found")
 		}
 		log.Printf("Could not lookup data for '%s': %s", ip.String(), err)
-		return "", "", 0
-	}
-	fmt.Printf("city name: %v\n", record.City.Names["en"])
-	if len(record.Subdivisions) > 0 {
-		fmt.Printf("subdivision name: %v\n", record.Subdivisions[0].Names["en"])
-	}
-	fmt.Printf("country name: %v\n", record.Country.Names["en"])
-	fmt.Printf("ISO country code: %v\n", record.Country.IsoCode)
-	fmt.Printf("Time zone: %v\n", record.Location.TimeZone)
-	fmt.Printf("Coordinates: %v, %v\n", record.Location.Latitude, record.Location.Longitude)
+	} else {
+		// fmt.Printf("city name: %v\n", record.City.Names["en"])
+		// if len(record.Subdivisions) > 0 {
+		// 	fmt.Printf("subdivision name: %v\n", record.Subdivisions[0].Names["en"])
+		// }
+		// fmt.Printf("country name: %v\n", record.Country.Names["en"])
+		// fmt.Printf("ISO country code: %v\n", record.Country.IsoCode)
+		// fmt.Printf("Time zone: %v\n", record.Location.TimeZone)
+		// fmt.Printf("Coordinates: %v, %v\n", record.Location.Latitude, record.Location.Longitude)
 
-	pretty.Println(record)
+		rcc = record.Country.IsoCode
 
-	asn := 0
-
-	// asnStr, _ := geoasn.GetName(ip)
-	// if len(asnStr) > 0 {
-	// 	spaceIdx := strings.Index(asnStr, " ")
-	// 	if spaceIdx > 0 {
-	// 		asnStr = asnStr[2:spaceIdx]
-	// 		asn, _ = strconv.Atoi(asnStr)
-	// 	}
-	// }
-
-	region := ""
-	if len(record.Subdivisions) > 0 {
-		region = record.Subdivisions[0].IsoCode
+		if len(record.Subdivisions) > 0 {
+			rrc = record.Subdivisions[0].IsoCode
+		}
 	}
 
-	return record.Country.IsoCode, region, asn
+	asn, err := geoasn.ASN(ip)
+	if err != nil {
+		log.Printf("Could not lookup ASN data for '%s': %s", ip.String(), err)
+	} else {
+		rasn = asn.AutonomousSystemNumber
+	}
+
+	return rcc, rrc, rasn
 }
 
 func dbConnect() {

@@ -22,9 +22,9 @@ type LogData struct {
 	ServerRC  string     `db:"server_rc"`
 	EdnsCC    string     `db:"edns_cc"`
 	EdnsRC    string     `db:"edns_rc"`
-	ClientASN int        `db:"client_asn"`
-	ServerASN int        `db:"server_asn"`
-	EdnsASN   int        `db:"edns_asn"`
+	ClientASN uint       `db:"client_asn"`
+	ServerASN uint       `db:"server_asn"`
+	EdnsASN   uint       `db:"edns_asn"`
 	HasEdns   bool       `db:"has_edns"`
 	TestIP    string     `db:"test_ip" json:"-"`
 	FirstSeen *time.Time `db:"first_seen" json:"-"`
