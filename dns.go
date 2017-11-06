@@ -86,6 +86,17 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 
 		qtype := req.Question[0].Qtype
 
+		ednsIP, extraRR, edns := getEdnsSubNet(req)
+		ip, _, _ := net.SplitHostPort(w.RemoteAddr().String())
+
+		if edns != nil {
+			// log.Println("family", edns.Family)
+			if edns.Family != 0 {
+				edns.SourceScope = 0
+				m.Extra = append(m.Extra, extraRR)
+			}
+		}
+
 		if qtype == dns.TypeNS && len(uuid) == 0 {
 			m.Answer = ns
 			w.WriteMsg(m)
@@ -100,10 +111,6 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 		}
 
 		if len(uuid) > 0 {
-
-			ednsIP, extraRR, edns := getEdnsSubNet(req)
-			ip, _, _ := net.SplitHostPort(w.RemoteAddr().String())
-
 			log.Printf("DNS request from %s for %s", ip, uuid)
 			a.Header().Name = req.Question[0].Name
 			m.Answer = []dns.RR{a}
@@ -117,14 +124,10 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 				// We expire the session data after 10 seconds, so
 				// encourage DNS caches to come back after 5.
 				a.Header().Ttl = 5
-				if edns != nil {
-					// log.Println("family", edns.Family)
-					if edns.Family != 0 {
-						edns.SourceScope = edns.SourceNetmask
-						m.Extra = append(m.Extra, extraRR)
-					}
-				}
 				setCache(uuid, ip, ednsIP)
+				if edns != nil {
+					edns.SourceScope = edns.SourceNetmask
+				}
 			}
 
 		} else {
