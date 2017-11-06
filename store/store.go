@@ -235,6 +235,8 @@ func dbStore(data *storeapi.LogData) error {
 	update_ips AS (
     	UPDATE ips
     	SET
+		edns_net = ud.edns_net,
+
     		client_cc = ud.client_cc,
     		client_rc = ud.client_rc,
     		client_asn = ud.client_asn,
