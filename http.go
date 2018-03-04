@@ -11,7 +11,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/devel/dnsmapper/storeapi"
@@ -65,10 +64,7 @@ func uuid() string {
 
 func jsonData(req *http.Request) (string, error) {
 
-	ip := remoteIP(req.Header)
-	if len(ip) == 0 {
-		ip, _, _ = net.SplitHostPort(req.RemoteAddr)
-	}
+	ip, _, _ := net.SplitHostPort(req.RemoteAddr)
 
 	resp := &ipResponse{HTTP: ip, DNS: ""}
 
@@ -261,23 +257,4 @@ func localNet(ip net.IP) bool {
 		}
 	}
 	return false
-}
-
-func remoteIP(h http.Header) string {
-	xff := h.Get("X-Forwarded-For")
-	if len(xff) > 0 {
-		ips := strings.Split(xff, ",")
-		for i := len(ips) - 1; i >= 0; i-- {
-			ip := strings.TrimSpace(ips[i])
-			nip := net.ParseIP(ip)
-			if nip != nil {
-				if localNet(nip) {
-					continue
-				}
-				return nip.String()
-			}
-		}
-	}
-
-	return ""
 }
