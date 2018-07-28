@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/devel/dnsmapper/storeapi"
@@ -31,7 +32,13 @@ var (
 func init() {
 	go uuidFactory()
 
-	pn := []string{"10.0.0.0/8", "192.168.0.0/16"}
+	pn := []string{
+		"127.0.0.0/8",
+		"10.0.0.0/8",
+		"172.16.0.0/12",
+		"192.168.0.0/16",
+		"fc00::/7",
+	}
 	for _, p := range pn {
 		_, ipnet, err := net.ParseCIDR(p)
 		if err != nil {
@@ -62,9 +69,32 @@ func uuid() string {
 	return <-uuidCh
 }
 
+func remoteIP(xff string) string {
+	if len(xff) > 0 {
+		ips := strings.Split(xff, ",")
+		for i := len(ips) - 1; i >= 0; i-- {
+			ip := strings.TrimSpace(ips[i])
+			nip := net.ParseIP(ip)
+			if nip != nil {
+				if localNet(nip) {
+					continue
+				}
+				return nip.String()
+			}
+		}
+	}
+
+	return ""
+}
+
 func jsonData(req *http.Request) (string, error) {
 
 	ip, _, _ := net.SplitHostPort(req.RemoteAddr)
+	nip := net.ParseIP(ip)
+
+	if xff := req.Header.Get("X-Forwarded-For"); len(xff) > 0 && localNet(nip) {
+		ip = remoteIP(xff)
+	}
 
 	resp := &ipResponse{HTTP: ip, DNS: ""}
 
@@ -130,6 +160,7 @@ func mainServer(w http.ResponseWriter, req *http.Request) {
 
 		js, err := jsonData(req)
 		if err != nil {
+			log.Printf("redirecting to new uuid, err: %s", err)
 			redirectUUID(w, req)
 			return
 		}
