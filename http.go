@@ -170,7 +170,12 @@ func mainServer(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		if jsonp := req.FormValue("jsonp"); len(jsonp) > 0 {
+		jsonp := req.FormValue("jsonp")
+		if len(jsonp) == 0 {
+			jsonp = req.FormValue("callback")
+		}
+
+		if len(jsonp) > 0 {
 			w.Header().Set("Content-Type", "text/javascript")
 			io.WriteString(w, jsonp+"("+js+");\n")
 			return
@@ -183,18 +188,29 @@ func mainServer(w http.ResponseWriter, req *http.Request) {
 
 	}
 
+	mapperScript := `
+	 (function(global){"use strict";var id=function(){var chars="0123456789abcdefghijklmnopqrstuvxyz".split("");
+	 var uuid=[],rnd=Math.random,r;for(var i=0;i<17;i++){if(!uuid[i]){r=0|rnd()*16;uuid[i]=chars[i==19?r&3|8:r&15]}}
+	 return uuid.join("")};
+	 setTimeout(function(){(new Image).src="http://"+id()+".` +
+		*flagdomain +
+		`/none"},3200)})(this);
+	 `
+
 	if req.URL.Path == "/mapper.js" {
 		w.Header().Set("Cache-Control", "public, max-age=86400")
 		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
 		w.WriteHeader(200)
-		io.WriteString(w, `
-(function(global){"use strict";var id=function(){var chars="0123456789abcdefghijklmnopqrstuvxyz".split("");
-var uuid=[],rnd=Math.random,r;for(var i=0;i<17;i++){if(!uuid[i]){r=0|rnd()*16;uuid[i]=chars[i==19?r&3|8:r&15]}}
-return uuid.join("")};
-setTimeout(function(){(new Image).src="http://"+id()+".`+
-			*flagdomain+
-			`/none"},3200)})(this);
-`)
+		io.WriteString(w, mapperScript)
+		return
+	}
+
+	if req.URL.Path == "/mapper-v6compat.js" {
+		w.Header().Set("Cache-Control", "public, max-age=60")
+		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
+		w.WriteHeader(200)
+		io.WriteString(w, mapperScript)
+		io.WriteString(w, `v6 = { "version": "2", test: function(){} };`)
 		return
 	}
 
