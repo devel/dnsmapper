@@ -73,6 +73,14 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 	h := &dns.RR_Header{Ttl: 5, Class: dns.ClassINET, Rrtype: dns.TypeA}
 	a := &dns.A{Hdr: *h, A: net.ParseIP(*flagip)}
 
+	hasACME := false
+	if len(*flagacmedomain) > 0 {
+		hasACME = true
+		if !dns.IsFqdn(*flagacmedomain) {
+			*flagacmedomain = *flagacmedomain + "."
+		}
+	}
+
 	return func(w dns.ResponseWriter, req *dns.Msg) {
 
 		m := new(dns.Msg)
@@ -110,8 +118,25 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 			return
 		}
 
-		if len(uuid) > 0 {
-			log.Printf("DNS request from %s for %s", ip, uuid)
+		if len(uuid) == 0 {
+			// NOERROR
+			w.WriteMsg(m)
+			return
+		}
+
+		log.Printf("DNS request from %s for %s", ip, uuid)
+
+		if hasACME && uuid == "_acme-challenge" {
+			acmeCNAME := &dns.CNAME{
+				Hdr: dns.RR_Header{
+					Name:   req.Question[0].Name,
+					Ttl:    600,
+					Rrtype: dns.TypeCNAME, Class: dns.ClassINET,
+				},
+				Target: *flagacmedomain,
+			}
+			m.Answer = []dns.RR{acmeCNAME}
+		} else {
 			a.Header().Name = req.Question[0].Name
 			m.Answer = []dns.RR{a}
 
@@ -129,11 +154,6 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 					edns.SourceScope = edns.SourceNetmask
 				}
 			}
-
-		} else {
-			// NOERROR
-			w.WriteMsg(m)
-			return
 		}
 
 		if len(m.Answer) == 0 {

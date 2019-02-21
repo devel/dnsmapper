@@ -15,7 +15,7 @@ import (
 )
 
 // Current version
-var VERSION = "2.6.3"
+var VERSION = "2.7.0"
 
 var (
 	flagdomain     = flag.String("domain", "example.com", "base domain for the dnsmapper")
@@ -25,6 +25,8 @@ var (
 	flaghttpsport  = flag.String("httpsport", "443", "Set the HTTP/TLS port")
 	flagtlskeyfile = flag.String("tlskeyfile", "", "Specify path to TLS key (optional)")
 	flagtlscrtfile = flag.String("tlscertfile", "", "Specify path to TLS certificate (optional)")
+
+	flagacmedomain = flag.String("acmedomain", "", "Domain to cname _acme-challenge.${domain} to")
 
 	flaglog        = flag.Bool("log", false, "be more verbose")
 	flagreporthost = flag.String("reporthost", "", "Hostname for results host")
