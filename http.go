@@ -144,9 +144,17 @@ func redirectUUID(w http.ResponseWriter, req *http.Request) {
 	return
 }
 
+var apiPaths = map[string]interface{}{
+	"/jsonp":    nil,
+	"/json":     nil,
+	"/none":     nil,
+	"/gone":     nil,
+	"/notfound": nil,
+}
+
 func mainServer(w http.ResponseWriter, req *http.Request) {
 
-	if req.URL.Path == "/jsonp" || req.URL.Path == "/json" || req.URL.Path == "/none" {
+	if _, ok := apiPaths[req.URL.Path]; ok {
 
 		w.Header().Set("Cache-Control", "private, no-cache, no-store, must-revalidate")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -167,6 +175,16 @@ func mainServer(w http.ResponseWriter, req *http.Request) {
 
 		if req.URL.Path == "/none" {
 			w.WriteHeader(204)
+			return
+		}
+
+		if req.URL.Path == "/gone" {
+			w.WriteHeader(410)
+			return
+		}
+
+		if req.URL.Path == "/notfound" {
+			w.WriteHeader(404)
 			return
 		}
 
