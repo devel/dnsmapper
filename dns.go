@@ -111,19 +111,6 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 			return
 		}
 
-		// we only know how to do A records
-		if qtype != dns.TypeA {
-			m.Ns = []dns.RR{soa}
-			w.WriteMsg(m)
-			return
-		}
-
-		if len(uuid) == 0 {
-			// NOERROR
-			w.WriteMsg(m)
-			return
-		}
-
 		log.Printf("DNS request from %s for %s", ip, uuid)
 
 		if hasACME && uuid == "_acme-challenge" {
@@ -136,7 +123,25 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 				Target: *flagacmedomain,
 			}
 			m.Answer = []dns.RR{acmeCNAME}
-		} else {
+			w.WriteMsg(m)
+			return
+		}
+
+		// we only know how to do A records
+		if qtype != dns.TypeA {
+			m.Ns = []dns.RR{soa}
+			w.WriteMsg(m)
+			return
+		}
+
+		if len(uuid) == 0 {
+			// NOERROR
+			m.Ns = []dns.RR{soa}
+			w.WriteMsg(m)
+			return
+		}
+
+		if len(m.Answer) == 0 {
 			a.Header().Name = req.Question[0].Name
 			m.Answer = []dns.RR{a}
 
