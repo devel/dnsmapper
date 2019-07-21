@@ -262,6 +262,8 @@ func mainServer(w http.ResponseWriter, req *http.Request) {
 func httpHandler() {
 	http.HandleFunc("/", mainServer)
 
+	handler := handlers.CombinedLoggingHandler(os.Stdout, http.DefaultServeMux)
+
 	if len(*flagtlskeyfile) > 0 {
 
 		log.Printf("Starting TLS with key='%s' and cert='%s'",
@@ -289,12 +291,13 @@ func httpHandler() {
 
 			tlslisten := *flagip + ":" + *flaghttpsport
 			srv := &http.Server{
+				Handler:      handler,
 				Addr:         tlslisten,
 				WriteTimeout: 5 * time.Second,
 				ReadTimeout:  10 * time.Second,
 				TLSConfig:    tlsconfig,
 			}
-			log.Println("Going to listen for TLS requests on port", tlslisten)
+			log.Printf("HTTPS listen on %s", tlslisten)
 			log.Fatal(srv.ListenAndServeTLS(
 				*flagtlscrtfile,
 				*flagtlskeyfile,
@@ -305,7 +308,7 @@ func httpHandler() {
 
 	listen := *flagip + ":" + *flaghttpport
 	srv := &http.Server{
-		Handler:      handlers.CombinedLoggingHandler(os.Stdout, http.DefaultServeMux),
+		Handler:      handler,
 		Addr:         listen,
 		WriteTimeout: 5 * time.Second,
 		ReadTimeout:  5 * time.Second,
