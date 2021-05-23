@@ -10,19 +10,19 @@ import (
 	"strings"
 
 	"github.com/devel/dnsmapper/storeapi"
-	"github.com/hashicorp/golang-lru"
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/miekg/dns"
 )
 
 // Current version
-var VERSION = "2.8.2"
+var VERSION = "2.9.2"
 
 var (
 	flagdomain     = flag.String("domain", "example.com", "base domain for the dnsmapper")
 	flagip         = flag.String("ip", "127.0.0.1", "set the IP address")
-	flagdnsport    = flag.String("dnsport", "53", "Set the DNS port")
-	flaghttpport   = flag.String("httpport", "80", "Set the HTTP port")
-	flaghttpsport  = flag.String("httpsport", "443", "Set the HTTP/TLS port")
+	flagdnsport    = flag.Int("dnsport", 53, "Set the DNS port")
+	flaghttpport   = flag.Int("httpport", 80, "Set the HTTP port")
+	flaghttpsport  = flag.Int("httpsport", 443, "Set the HTTP/TLS port")
 	flagtlskeyfile = flag.String("tlskeyfile", "", "Specify path to TLS key (optional)")
 	flagtlscrtfile = flag.String("tlscertfile", "", "Specify path to TLS certificate (optional)")
 
@@ -90,10 +90,10 @@ func main() {
 		go reportPoster(ch)
 	}
 
-	go httpHandler()
-	go listenAndServeDNS(*flagip + ":" + *flagdnsport)
+	go httpHandler(*flagip, *flaghttpport, *flaghttpsport)
+	go listenAndServeDNS(*flagip, *flagdnsport)
 
-	terminate := make(chan os.Signal)
+	terminate := make(chan os.Signal, 1)
 	signal.Notify(terminate, os.Interrupt)
 
 	<-terminate

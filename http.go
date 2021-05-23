@@ -6,12 +6,14 @@ import (
 	"encoding/base32"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/devel/dnsmapper/storeapi"
@@ -87,7 +89,16 @@ func remoteIP(xff string) string {
 	return ""
 }
 
-func jsonData(req *http.Request) (string, error) {
+func (resp *ipResponse) JSON() (string, error) {
+	js, err := json.Marshal(resp)
+	if err != nil {
+		log.Print("JSON ERROR:", err)
+		return "", err
+	}
+	return string(js), err
+}
+
+func responseData(req *http.Request) (*ipResponse, error) {
 
 	ip, _, _ := net.SplitHostPort(req.RemoteAddr)
 	nip := net.ParseIP(ip)
@@ -103,17 +114,11 @@ func jsonData(req *http.Request) (string, error) {
 	dns, edns, ok := getCache(uuid)
 
 	if !ok {
-		return "", errors.New("UUID not found")
+		return nil, errors.New("UUID not found")
 	}
 
 	resp.DNS = dns
 	resp.EDNS = edns
-
-	js, err := json.Marshal(resp)
-	if err != nil {
-		log.Print("JSON ERROR:", err)
-		return "", err
-	}
 
 	data := storeapi.RequestData{
 		TestIP:   *flagip,
@@ -127,7 +132,7 @@ func jsonData(req *http.Request) (string, error) {
 		log.Println("dropped log data, queue full")
 	}
 
-	return string(js), nil
+	return resp, nil
 }
 
 func redirectUUID(w http.ResponseWriter, req *http.Request) {
@@ -140,13 +145,14 @@ func redirectUUID(w http.ResponseWriter, req *http.Request) {
 		proto = "https"
 	}
 
-	http.Redirect(w, req, proto+"://"+host+req.RequestURI, 302)
+	http.Redirect(w, req, proto+"://"+host+req.RequestURI, http.StatusFound)
 	return
 }
 
 var apiPaths = map[string]interface{}{
 	"/jsonp":    nil,
 	"/json":     nil,
+	"/ip":       nil,
 	"/none":     nil,
 	"/gone":     nil,
 	"/notfound": nil,
@@ -166,25 +172,34 @@ func mainServer(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		js, err := jsonData(req)
+		resp, err := responseData(req)
 		if err != nil {
 			log.Printf("redirecting to new uuid, err: %s", err)
 			redirectUUID(w, req)
 			return
 		}
 
-		if req.URL.Path == "/none" {
+		switch req.URL.Path {
+		case "/none":
 			w.WriteHeader(204)
 			return
-		}
-
-		if req.URL.Path == "/gone" {
+		case "/gone":
 			w.WriteHeader(410)
+			return
+		case "/notfound":
+			w.WriteHeader(404)
+			return
+		case "/ip":
+			w.WriteHeader(200)
+			w.Write([]byte(resp.HTTP))
 			return
 		}
 
-		if req.URL.Path == "/notfound" {
-			w.WriteHeader(404)
+		// json request
+		js, err := resp.JSON()
+		if err != nil {
+			w.WriteHeader(500)
+			log.Printf("could not convert response %+v to json: %s", resp, err)
 			return
 		}
 
@@ -259,10 +274,32 @@ func mainServer(w http.ResponseWriter, req *http.Request) {
 	return
 }
 
-func httpHandler() {
+func httpListen(h http.Handler, ip string, port int, tlsconfig *tls.Config) error {
+
+	listen := fmt.Sprintf("%s:%d", ip, port)
+	srv := &http.Server{
+		Handler:      h,
+		Addr:         listen,
+		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  10 * time.Second,
+		TLSConfig:    tlsconfig,
+	}
+	if tlsconfig != nil {
+		log.Printf("HTTPS listen on %s", listen)
+		return srv.ListenAndServeTLS(
+			*flagtlscrtfile,
+			*flagtlskeyfile,
+		)
+	}
+
+	log.Printf("HTTP  listen on %s", listen)
+	return srv.ListenAndServe()
+}
+
+func httpHandler(listenIP string, listenHTTPPort, listenHTTPSPort int) {
 	http.HandleFunc("/", mainServer)
 
-	handler := handlers.CombinedLoggingHandler(os.Stdout, http.DefaultServeMux)
+	h := handlers.CombinedLoggingHandler(os.Stdout, http.DefaultServeMux)
 
 	if len(*flagtlskeyfile) > 0 {
 
@@ -271,51 +308,59 @@ func httpHandler() {
 			*flagtlscrtfile,
 		)
 
+		tlsconfig := &tls.Config{
+			ClientSessionCache: tls.NewLRUClientSessionCache(100),
+			MinVersion:         tls.VersionTLS10,
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+				tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+				tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+				tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+				tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
+				tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA},
+		}
+
+		IPs := []string{listenIP}
+		if listenHTTPSPort != 443 {
+			IPs = append(IPs, "127.0.0.1")
+		}
+
+		for _, ip := range IPs {
+			listenIP := ip
+			go func() {
+				err := httpListen(h, listenIP, listenHTTPSPort, tlsconfig)
+				if err != nil {
+					log.Fatalf("https error %s:%d: %s", listenIP, listenHTTPSPort, err)
+				}
+			}()
+		}
+
+	}
+
+	IPs := []string{listenIP}
+	if listenHTTPSPort != 80 {
+		IPs = append(IPs, "127.0.0.1")
+	}
+
+	for _, ip := range IPs {
+		listenIP := ip
 		go func() {
-
-			tlsconfig := &tls.Config{
-				ClientSessionCache: tls.NewLRUClientSessionCache(100),
-				MinVersion:         tls.VersionTLS10,
-				CipherSuites: []uint16{
-					tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-					tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-					tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-					tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-					tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-					tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-					tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-					tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-					tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
-					tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA},
+			err := httpListen(h, listenIP, listenHTTPPort, nil)
+			if err != nil {
+				log.Fatalf("http error %s:%d: %s", listenIP, listenHTTPPort, err)
 			}
-
-			tlslisten := *flagip + ":" + *flaghttpsport
-			srv := &http.Server{
-				Handler:      handler,
-				Addr:         tlslisten,
-				WriteTimeout: 5 * time.Second,
-				ReadTimeout:  10 * time.Second,
-				TLSConfig:    tlsconfig,
-			}
-			log.Printf("HTTPS listen on %s", tlslisten)
-			log.Fatal(srv.ListenAndServeTLS(
-				*flagtlscrtfile,
-				*flagtlskeyfile,
-			))
-
 		}()
 	}
 
-	listen := *flagip + ":" + *flaghttpport
-	srv := &http.Server{
-		Handler:      handler,
-		Addr:         listen,
-		WriteTimeout: 5 * time.Second,
-		ReadTimeout:  5 * time.Second,
-	}
-	log.Println("HTTP listen on", listen)
-	log.Fatal(srv.ListenAndServe())
-
+	// maybe later we can be smarter; now we just wait forever or until something
+	// "fatals" out
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	wg.Wait()
 }
 
 func localNet(ip net.IP) bool {

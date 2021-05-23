@@ -10,8 +10,6 @@ require (
 	github.com/gorilla/handlers v1.4.2
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/jmoiron/sqlx v0.0.0-20180228184624-cf35089a1979
-	github.com/kr/pretty v0.0.0-20160823170715-cfb55aafdaf3
-	github.com/kr/text v0.0.0-20160504234017-7cafcd837844 // indirect
 	github.com/lib/pq v0.0.0-20180201184707-88edab080323
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
 	github.com/miekg/dns v1.1.29

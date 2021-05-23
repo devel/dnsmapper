@@ -171,22 +171,23 @@ func setupServerFunc() func(dns.ResponseWriter, *dns.Msg) {
 		// log.Println("Returning", m)
 
 		w.WriteMsg(m)
-		return
 	}
 
 }
 
-func listenAndServeDNS(ip string) {
+func listenAndServeDNS(ip string, port int) {
+
+	listen := fmt.Sprintf("%s:%d", ip, port)
 
 	prots := []string{"udp", "tcp"}
 
 	for _, prot := range prots {
 		go func(p string) {
-			server := &dns.Server{Addr: ip, Net: p}
+			server := &dns.Server{Addr: listen, Net: p}
 
-			log.Printf("Opening on %s %s", ip, p)
+			log.Printf("DNS listen on %s %s", ip, p)
 			if err := server.ListenAndServe(); err != nil {
-				log.Fatalf("geodns: failed to setup %s %s: %s", ip, p, err)
+				log.Fatalf("geodns: failed to setup dns %s %d: %s", ip, p, err)
 			}
 			log.Fatalf("geodns: ListenAndServe unexpectedly returned")
 		}(prot)
