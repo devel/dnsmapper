@@ -15,7 +15,7 @@ import (
 )
 
 // Current version
-var VERSION = "2.9.2"
+var VERSION = "2.9.3"
 
 var (
 	flagdomain     = flag.String("domain", "example.com", "base domain for the dnsmapper")
