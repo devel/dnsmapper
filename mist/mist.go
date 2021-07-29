@@ -88,7 +88,9 @@ func myIPHandler(w rest.ResponseWriter, r *rest.Request) {
 	if db == nil {
 		err := dbConnect()
 		if err != nil {
+			log.Printf("dbConnect error: %s", err)
 			http.Error(w.(http.ResponseWriter), "db connect error", 500)
+			return
 		}
 	}
 
