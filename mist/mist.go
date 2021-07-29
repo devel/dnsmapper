@@ -8,7 +8,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/ant0ine/go-json-rest/rest"
@@ -34,8 +33,6 @@ var (
 
 func init() {
 	flag.Parse()
-
-	os.Setenv("PGSSLMODE", "disable")
 
 	pn := []string{"10.0.0.0/8", "192.168.0.0/16"}
 	for _, p := range pn {
@@ -126,7 +123,7 @@ func myIPHandler(w rest.ResponseWriter, r *rest.Request) {
 
 func dbConnect() error {
 	var err error
-	db, err = sqlx.Connect("postgres", fmt.Sprintf("user=%s host=%s password=%s sslmode=disable", *dbuser, *dbhost, *dbpass))
+	db, err = sqlx.Connect("postgres", fmt.Sprintf("user=%s host=%s password=%s", *dbuser, *dbhost, *dbpass))
 	if err != nil {
 		return err
 	}

@@ -193,7 +193,7 @@ func ccLookup(ip net.IP) (rcc string, rrc string, rasn uint) {
 
 func dbConnect() {
 	var err error
-	db, err = sql.Open("postgres", fmt.Sprintf("user=%s host=%s password=%s sslmode=disable", *dbuser, *dbhost, *dbpass))
+	db, err = sql.Open("postgres", fmt.Sprintf("user=%s host=%s password=%s", *dbuser, *dbhost, *dbpass))
 	if err != nil {
 		log.Fatalf("create db error: %s", err)
 	}
