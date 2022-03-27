@@ -43,8 +43,8 @@ func init() {
 
 	var err error
 
-	dbName := "GeoIP2-City.mmdb"
-	asnDbName := "GeoIP2-ASN.mmdb"
+	dbName := "GeoLite2-City.mmdb"
+	asnDbName := "GeoLite2-ASN.mmdb"
 
 	if len(path) > 0 {
 		dbName = filepath.Join(path, dbName)
