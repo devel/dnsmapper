@@ -17,6 +17,8 @@ WORKDIR /dnsmapper/
 COPY --from=build /go/bin/mist  /dnsmapper/
 COPY --from=build /go/bin/store /dnsmapper/
 
+ADD run-store /dnsmapper/
+
 # COPY --from=build /go/src/git.develooper.com/project/templates /project/templates/
 # COPY --from=build /go/src/git.develooper.com/project/static /project/static/
 # COPY --from=build /go/src/git.develooper.com/project/config.yaml.sample /etc/project/config.yaml

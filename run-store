@@ -1,0 +1,9 @@
+#!/bin/sh
+if [[ ! -z "$GEOIP" ]]; then
+  while [[ ! -e "$GEOIP/GeoLite2-City.mmdb" ]]; do
+    echo waiting for geoip databases
+    sleep 4
+  done
+fi
+
+exec /dnsmapper/store $@
