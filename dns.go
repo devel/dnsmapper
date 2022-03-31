@@ -187,7 +187,7 @@ func listenAndServeDNS(ip string, port int) {
 
 			log.Printf("DNS listen on %s %s", ip, p)
 			if err := server.ListenAndServe(); err != nil {
-				log.Fatalf("geodns: failed to setup dns %s %d: %s", ip, p, err)
+				log.Fatalf("geodns: failed to setup dns %s %s: %s", ip, p, err)
 			}
 			log.Fatalf("geodns: ListenAndServe unexpectedly returned")
 		}(prot)

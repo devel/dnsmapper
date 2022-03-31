@@ -61,7 +61,6 @@ func setup() {
 }
 
 func init() {
-	flag.Parse()
 	ch = make(logChannel, posterCount*20)
 
 	os.Setenv("PGSSLMODE", "disable")
@@ -79,6 +78,8 @@ func init() {
 
 func main() {
 	log.Printf("Starting dnsmapper %s\n", VERSION)
+
+	flag.Parse()
 
 	runtime.MemProfileRate = 1
 
