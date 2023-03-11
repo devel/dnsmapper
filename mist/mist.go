@@ -1,7 +1,5 @@
 package main
 
-//go:generate esc -o static.go -ignore .DS_Store public
-
 import (
 	"flag"
 	"fmt"
@@ -12,6 +10,7 @@ import (
 
 	"github.com/ant0ine/go-json-rest/rest"
 
+	"github.com/devel/dnsmapper/mist/public"
 	"github.com/devel/dnsmapper/storeapi"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -64,14 +63,20 @@ func buildMux() *http.ServeMux {
 
 	api.SetApp(router)
 
-	mux.Handle("/", http.FileServer(Dir(*devel, "/public")))
+	var fileSystem http.FileSystem
+	if *devel {
+		fileSystem = http.Dir("./public")
+	} else {
+		fileSystem = http.FS(public.Files)
+	}
+
+	mux.Handle("/", http.FileServer(fileSystem))
 
 	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", api.MakeHandler()))
 
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(200)
 		w.Write([]byte("ok\n"))
-		return
 	})
 
 	return mux
@@ -119,8 +124,6 @@ func myIPHandler(w rest.ResponseWriter, r *rest.Request) {
 	w.Header().Set("Cache-Control", "private, must-revalidate, max-age=0")
 
 	w.WriteJson(ips)
-
-	return
 }
 
 func dbConnect() error {

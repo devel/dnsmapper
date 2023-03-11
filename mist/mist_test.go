@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -31,7 +31,7 @@ func TestAPI(t *testing.T) {
 	assert.Equal(t, 200, resp.StatusCode)
 
 	var p []byte
-	if p, err = ioutil.ReadAll(resp.Body); err != nil {
+	if p, err = io.ReadAll(resp.Body); err != nil {
 		t.Errorf("Error reading response: %s", err)
 		return
 	}
