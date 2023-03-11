@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/rand"
 	"crypto/tls"
+	_ "embed"
 	"encoding/base32"
 	"encoding/json"
 	"errors"
@@ -30,6 +31,9 @@ var (
 	uuidCh    chan string
 	localNets []*net.IPNet
 )
+
+//go:embed index.html
+var HOMEPAGE string
 
 func init() {
 	go uuidFactory()
@@ -146,7 +150,6 @@ func redirectUUID(w http.ResponseWriter, req *http.Request) {
 	}
 
 	http.Redirect(w, req, proto+"://"+host+req.RequestURI, http.StatusFound)
-	return
 }
 
 var apiPaths = map[string]interface{}{
@@ -271,7 +274,6 @@ func mainServer(w http.ResponseWriter, req *http.Request) {
 	}
 
 	http.NotFound(w, req)
-	return
 }
 
 func httpListen(h http.Handler, ip string, port int, tlsconfig *tls.Config) error {
@@ -297,6 +299,7 @@ func httpListen(h http.Handler, ip string, port int, tlsconfig *tls.Config) erro
 }
 
 func httpHandler(listenIP string, listenHTTPPort, listenHTTPSPort int) {
+
 	http.HandleFunc("/", mainServer)
 
 	h := handlers.CombinedLoggingHandler(os.Stdout, http.DefaultServeMux)
@@ -311,26 +314,20 @@ func httpHandler(listenIP string, listenHTTPPort, listenHTTPSPort int) {
 		tlsconfig := &tls.Config{
 			ClientSessionCache: tls.NewLRUClientSessionCache(100),
 			MinVersion:         tls.VersionTLS10,
-			CipherSuites: []uint16{
-				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-				tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-				tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-				tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-				tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
-				tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA},
 		}
 
 		IPs := []string{listenIP}
+
+		// we have some sort of proxy, so listen on localhost
 		if listenHTTPSPort != 443 {
-			IPs = append(IPs, "127.0.0.1")
+			if listenIP != "127.0.0.1" {
+				IPs = append(IPs, "127.0.0.1")
+			}
 		}
 
 		for _, ip := range IPs {
 			listenIP := ip
+			log.Printf("listenIP TLS: %q", listenIP)
 			go func() {
 				err := httpListen(h, listenIP, listenHTTPSPort, tlsconfig)
 				if err != nil {
@@ -343,7 +340,9 @@ func httpHandler(listenIP string, listenHTTPPort, listenHTTPSPort int) {
 
 	IPs := []string{listenIP}
 	if listenHTTPSPort != 80 {
-		IPs = append(IPs, "127.0.0.1")
+		if listenIP != "127.0.0.1" {
+			IPs = append(IPs, "127.0.0.1")
+		}
 	}
 
 	for _, ip := range IPs {

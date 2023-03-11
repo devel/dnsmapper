@@ -48,6 +48,10 @@ func reportPoster(ch logChannel) {
 			}
 			reader := bytes.NewReader(js)
 			req, err := http.NewRequest("POST", url, reader)
+			if err != nil {
+				log.Printf("could not setup POST request: %s", err)
+				continue
+			}
 			req.Header.Set("Content-Type", "application/json")
 
 			resp, err := client.Do(req)

@@ -15,7 +15,7 @@ import (
 )
 
 // Current version
-var VERSION = "2.9.3"
+var VERSION = "2.9.4"
 
 var (
 	flagdomain     = flag.String("domain", "example.com", "base domain for the dnsmapper")
@@ -28,7 +28,6 @@ var (
 
 	flagacmedomain = flag.String("acmedomain", "", "Domain to cname _acme-challenge.${domain} to")
 
-	flaglog        = flag.Bool("log", false, "be more verbose")
 	flagreporthost = flag.String("reporthost", "", "Hostname for results host")
 
 	flagPrimaryNs = flag.String("ns", "ns.example.com", "nameserver names (comma separated)")
