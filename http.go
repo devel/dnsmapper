@@ -312,8 +312,7 @@ func httpHandler(listenIP string, listenHTTPPort, listenHTTPSPort int) {
 		)
 
 		tlsconfig := &tls.Config{
-			ClientSessionCache: tls.NewLRUClientSessionCache(100),
-			MinVersion:         tls.VersionTLS10,
+			ClientSessionCache: tls.NewLRUClientSessionCache(300),
 		}
 
 		IPs := []string{listenIP}
