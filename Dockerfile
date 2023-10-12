@@ -1,4 +1,4 @@
-FROM golang:1.20.5-alpine3.17 AS build
+FROM golang:1.21.3-alpine3.18 AS build
 RUN apk --no-cache add git
 WORKDIR /go/src/github.com/devel/dnsmapper
 ADD . /go/src/github.com/devel/dnsmapper
@@ -8,7 +8,7 @@ RUN go install .
 RUN go install github.com/devel/dnsmapper/mist
 RUN go install github.com/devel/dnsmapper/store
 
-FROM alpine:3.17.3
+FROM alpine:3.18.4
 RUN apk --no-cache add ca-certificates
 
 RUN addgroup dnsmapper && adduser -D -G dnsmapper dnsmapper
